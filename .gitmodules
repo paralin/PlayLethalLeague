@@ -1,0 +1,6 @@
+[submodule "thirdparty/XEDParse"]
+	path = thirdparty/XEDParse
+	url = https://github.com/x64dbg/XEDParse.git
+[submodule "thirdparty/asmjit"]
+	path = thirdparty/asmjit
+	url = https://github.com/kobalicek/asmjit.git
