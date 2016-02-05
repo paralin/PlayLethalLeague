@@ -8,6 +8,7 @@
 // Don't dereference these!
 struct GameOffsetStorage
 {
+	// Offsets
 	void* ball_base;
 	void* ball_coord;
 	void* ball_state;
@@ -19,6 +20,12 @@ struct GameOffsetStorage
 	void* player_coords[4];
 	void* player_states[4];
 	void* player_spawn;
+
+	// Storage
+	// current player for player loop
+	int currentPlayer;
+
+	// Flags
 	// should the buffer be reset
 	byte  do_reset;
 };

@@ -65,5 +65,8 @@
     <ClCompile Include="DevCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
+    <ClCompile Include="StageCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

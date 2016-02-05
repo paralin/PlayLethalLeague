@@ -3,7 +3,6 @@
 #include "Util.h"
 #include <sys/stat.h>
 #include "AllCaves.h"
-#include <asmjit/asmjit.h>
 #include <Tlhelp32.h>
 #include <cassert>
 
@@ -19,6 +18,7 @@ Game::Game() :
 
 	REGISTER_CODECAVE(BallCave);
 	REGISTER_CODECAVE(GameRulesCave);
+	REGISTER_CODECAVE(StageCave);
 	REGISTER_CODECAVE(DevCave);
 	REGISTER_CODECAVE(ResetCave);
 }
