@@ -19,6 +19,8 @@ struct GameOffsetStorage
 	void* player_coords[4];
 	void* player_states[4];
 	void* player_spawn;
+	// should the buffer be reset
+	byte  do_reset;
 };
 
 class CodeCave;

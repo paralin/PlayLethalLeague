@@ -19,6 +19,7 @@ Game::Game() :
 
 	REGISTER_CODECAVE(BallCave);
 	REGISTER_CODECAVE(GameRulesCave);
+	REGISTER_CODECAVE(ResetCave);
 }
 
 
@@ -78,6 +79,14 @@ void Game::initOffsetStorage()
 void Game::readOffsets() const
 {
 	ReadProcessMemory(gameHandle, remoteOffsetStorage, localOffsetStorage, sizeof(GameOffsetStorage), nullptr);
+	if (localOffsetStorage->do_reset)
+	{
+		LOG("do_reset bit flipped to 1, resetting offsets.");
+		// Initialize local to zero
+		memset(localOffsetStorage, 0, sizeof(GameOffsetStorage));
+		// Copy it to the remote process to zero that too
+		WriteProcessMemory(gameHandle, remoteOffsetStorage, localOffsetStorage, sizeof(GameOffsetStorage), nullptr);
+	}
 }
 
 MODULEENTRY32 GetModuleInfo(std::uint32_t ProcessID)
@@ -130,7 +139,10 @@ bool Game::performCodeCaves()
 			LOG("Searching for pattern:");
 			for (int i = 0; i < scn->patternSize; i++)
 			{
-				LOG(" " << std::dec << i << ": " << std::hex << ((int)scn->pattern[i]));
+				if (scn->pattern[i] == -1)
+					LOG(" " << std::dec << i << ": ??")
+				else
+					LOG(" " << std::dec << i << ": " << std::hex << ((int)scn->pattern[i]))
 			}
 		}
 	}
@@ -156,7 +168,7 @@ bool Game::performCodeCaves()
 		// bufSize = sys_info->dwPageSize + 10;
 		bufSize = 60000;
 		free(sys_info);
-	}
+}
 #endif
 
 	// Make array of "first characters" to identify
@@ -210,6 +222,10 @@ bool Game::performCodeCaves()
 					bool found = true;
 					for (int sx = 1; sx < s->patternSize; sx++)
 					{
+						// wildcard
+						if (s->pattern[sx] == -1)
+							continue;
+
 						if (buf[i + sx] != s->pattern[sx])
 						{
 							found = false;
@@ -223,7 +239,7 @@ bool Game::performCodeCaves()
 					LOG(" ==> match " << std::hex << loc);
 					for (int sx = 0; sx < s->patternSize; sx++)
 					{
-						LOG("   - " << std::dec << sx << ": " << std::hex << ((int)buf[i + sx]) <<  " = " << ((int)s->pattern[sx]));
+						LOG("   - " << std::dec << sx << ": " << std::hex << ((int)buf[i + sx]) << " = " << ((int)s->pattern[sx]));
 					}
 
 					loc = (reinterpret_cast<intptr_t>(basic_info.BaseAddress) + i);

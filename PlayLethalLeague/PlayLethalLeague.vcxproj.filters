@@ -59,5 +59,8 @@
     <ClCompile Include="GameRulesCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
+    <ClCompile Include="ResetCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
