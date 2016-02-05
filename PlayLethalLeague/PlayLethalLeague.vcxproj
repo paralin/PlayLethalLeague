@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BallCave.cpp" />
+    <ClCompile Include="DevCave.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameRulesCave.cpp" />
     <ClCompile Include="main.cpp" />

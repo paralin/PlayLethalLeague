@@ -19,6 +19,7 @@ Game::Game() :
 
 	REGISTER_CODECAVE(BallCave);
 	REGISTER_CODECAVE(GameRulesCave);
+	REGISTER_CODECAVE(DevCave);
 	REGISTER_CODECAVE(ResetCave);
 }
 
@@ -76,14 +77,23 @@ void Game::initOffsetStorage()
 	WriteProcessMemory(gameHandle, remoteOffsetStorage, localOffsetStorage, sizeof(GameOffsetStorage), nullptr);
 }
 
+#define ZEROOFF(IDENT) memset(&localOffsetStorage->IDENT, 0, sizeof(localOffsetStorage->IDENT));
 void Game::readOffsets() const
 {
 	ReadProcessMemory(gameHandle, remoteOffsetStorage, localOffsetStorage, sizeof(GameOffsetStorage), nullptr);
 	if (localOffsetStorage->do_reset)
 	{
-		LOG("do_reset bit flipped to 1, resetting offsets.");
-		// Initialize local to zero
-		memset(localOffsetStorage, 0, sizeof(GameOffsetStorage));
+		LOG("do_reset bit flipped to 1, resetting game state.");
+		ZEROOFF(do_reset);
+		ZEROOFF(ball_base);
+		ZEROOFF(ball_coord);
+		ZEROOFF(ball_state);
+		ZEROOFF(stage_base);
+		ZEROOFF(player_bases);
+		ZEROOFF(current_player);
+		ZEROOFF(player_coords);
+		ZEROOFF(player_states);
+		ZEROOFF(player_spawn);
 		// Copy it to the remote process to zero that too
 		WriteProcessMemory(gameHandle, remoteOffsetStorage, localOffsetStorage, sizeof(GameOffsetStorage), nullptr);
 	}
@@ -168,7 +178,7 @@ bool Game::performCodeCaves()
 		// bufSize = sys_info->dwPageSize + 10;
 		bufSize = 60000;
 		free(sys_info);
-}
+	}
 #endif
 
 	// Make array of "first characters" to identify
