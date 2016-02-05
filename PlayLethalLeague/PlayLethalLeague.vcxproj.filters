@@ -56,5 +56,8 @@
     <ClCompile Include="BallCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
+    <ClCompile Include="GameRulesCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

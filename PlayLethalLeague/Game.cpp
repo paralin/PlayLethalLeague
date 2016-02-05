@@ -18,6 +18,7 @@ Game::Game() :
 	localOffsetStorage = static_cast<GameOffsetStorage*>(malloc(sizeof(GameOffsetStorage)));
 
 	REGISTER_CODECAVE(BallCave);
+	REGISTER_CODECAVE(GameRulesCave);
 }
 
 
@@ -163,9 +164,8 @@ bool Game::performCodeCaves()
 	char* chars = static_cast<char*>(malloc(sizeof(char) * initChars));
 
 	{
-		int x = 0;
-		for (auto& i : scans)
-			chars[x] = i->pattern[0];
+		for (auto x = 0; x < scans.size(); x++)
+			chars[x] = scans.at(x)->pattern[0];
 	}
 
 	MEMORY_BASIC_INFORMATION basic_info;

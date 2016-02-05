@@ -72,7 +72,8 @@ int main()
 		g.readOffsets();
 		g.unsuspend();
 
-		LOG("Current ball offset: " << g.localOffsetStorage->ball_base)
+		LOG("Current ball offset: " << g.localOffsetStorage->ball_base);
+		LOG("Current game rules offset: " << g.localOffsetStorage->gamerule_set);
 	}
 
 	LOG("Done.");
