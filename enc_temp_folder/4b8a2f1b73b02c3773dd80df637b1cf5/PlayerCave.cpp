@@ -74,7 +74,6 @@ RENDER(PlayerCave, {
 	a.inc(x86::al);
 
 	// check if we're at the last player
-	// these checks are unnecessary and have been commented
 	//cmp al,04
 	//a.cmp(x86::al, 0x04);
 
