@@ -20,6 +20,7 @@ Game::Game() :
 	REGISTER_CODECAVE(GameRulesCave);
 	REGISTER_CODECAVE(StageCave);
 	REGISTER_CODECAVE(DevCave);
+	REGISTER_CODECAVE(PlayerCave);
 	REGISTER_CODECAVE(ResetCave);
 }
 
@@ -90,7 +91,7 @@ void Game::readOffsets() const
 		ZEROOFF(ball_state);
 		ZEROOFF(stage_base);
 		ZEROOFF(player_bases);
-		ZEROOFF(current_player);
+		ZEROOFF(currentPlayer);
 		ZEROOFF(player_coords);
 		ZEROOFF(player_states);
 		ZEROOFF(player_spawn);
@@ -298,7 +299,7 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 	// Now we need to make the return jump
 	// add 24 (twice what we need) bytes to be safe
 	codeSizeNoJmp = codeSize;
-	codeSize += 24;
+	codeSize += 5;
 	LPVOID cavLoc = VirtualAllocEx(gameHandle, nullptr, codeSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	LOG("Location of cave: " << std::hex << (reinterpret_cast<intptr_t>(cavLoc)) << std::dec);
 

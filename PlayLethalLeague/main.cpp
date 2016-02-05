@@ -76,6 +76,14 @@ int main()
 		LOG("ball_base: " << g.localOffsetStorage->ball_base);
 		LOG("game_rules: " << g.localOffsetStorage->gamerule_set);
 		LOG("dev_base: " << g.localOffsetStorage->dev_base);
+		LOG("spawn: " << g.localOffsetStorage->player_spawn);
+		for (int i = 0; i < 4; i++)
+		{
+			LOG("-> plyr " << i);
+			LOG("   - base:  " << g.localOffsetStorage->player_bases[i]);
+			LOG("   - coord: " << g.localOffsetStorage->player_coords[i]);
+			LOG("   - state: " << g.localOffsetStorage->player_states[i]);
+		}
 	}
 
 	LOG("Done.");

@@ -68,5 +68,8 @@
     <ClCompile Include="StageCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

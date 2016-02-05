@@ -65,7 +65,7 @@ RENDER(PlayerCave, {
 	a.mov(x86::ebx, x86::ptr(x86::esi, 0x194));
 
 	// mov [p1state+eax],ebx
-	a.mov(x86::ptr(x86::ebx, remoteAddr + OFFSETOF(player_states[0]), sizeof(void*)), x86::ebx);
+	a.mov(x86::ptr(x86::eax, remoteAddr + OFFSETOF(player_states[0]), sizeof(void*)), x86::ebx);
 
 	// mov eax,[currentPlayer]
 	a.mov(x86::eax, PTO(currentPlayer));

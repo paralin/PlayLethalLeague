@@ -16,7 +16,6 @@ struct GameOffsetStorage
 	void* dev_base;
 	void* stage_base;
 	void* player_bases[4];
-	void* current_player;
 	void* player_coords[4];
 	void* player_states[4];
 	void* player_spawn;
