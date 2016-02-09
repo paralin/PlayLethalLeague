@@ -86,13 +86,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)/thirdparty/asmjit/src/</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NOMINMAX;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)/thirdparty/asmjit/src/;C:/Boost/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)/lib/asmjit.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shlwapi.lib;$(SolutionDir)/lib/asmjit.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -143,20 +143,49 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Assert.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genes.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genome.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Innovation.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Parameters.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Population.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\PythonBindings.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Random.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Species.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Substrate.h" />
+    <ClInclude Include="..\thirdparty\MultiNEAT\src\Utils.h" />
     <ClInclude Include="AllCaves.h" />
     <ClInclude Include="CodeCave.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameStructs.h" />
+    <ClInclude Include="LLNeural.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Genome.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Innovation.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Parameters.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Population.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\PythonBindings.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Random.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Species.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Substrate.cpp" />
+    <ClCompile Include="..\thirdparty\MultiNEAT\src\Utils.cpp" />
     <ClCompile Include="BallCave.cpp" />
+    <ClCompile Include="InputOverrideCave.cpp" />
     <ClCompile Include="DevCave.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameRulesCave.cpp" />
+    <ClCompile Include="LLNeural.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PlayerCave.cpp" />
+    <ClCompile Include="PlayerSpawnCave.cpp" />
     <ClCompile Include="ResetCave.cpp" />
     <ClCompile Include="StageCave.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -166,6 +195,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="WindowFocusCave.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

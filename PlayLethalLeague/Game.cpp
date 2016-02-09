@@ -5,10 +5,12 @@
 #include "AllCaves.h"
 #include <Tlhelp32.h>
 #include <cassert>
+#include <ctime>
 
 #define FREE_HANDLE(thing) if (thing != nullptr) {CloseHandle(thing);} thing = nullptr;
 #define REGISTER_CODECAVE(CLASS) caves.push_back(std::make_shared<CLASS>());
 
+#define ZERO_STRUCT(stru) ZeroMemory(&stru, sizeof(stru));
 Game::Game() : 
 	gameHandle(nullptr), 
 	processId(0), 
@@ -16,11 +18,21 @@ Game::Game() :
 {
 	localOffsetStorage = static_cast<GameOffsetStorage*>(malloc(sizeof(GameOffsetStorage)));
 
+	ZERO_STRUCT(localDevRegion);
+	ZERO_STRUCT(localBallState);
+	ZERO_STRUCT(localBallCoords);
+	ZERO_STRUCT(players);
+
 	REGISTER_CODECAVE(BallCave);
 	REGISTER_CODECAVE(GameRulesCave);
 	REGISTER_CODECAVE(StageCave);
 	REGISTER_CODECAVE(DevCave);
 	REGISTER_CODECAVE(PlayerCave);
+	REGISTER_CODECAVE(PlayerSpawnCave);
+	REGISTER_CODECAVE(WindowRefocusCave);
+	REGISTER_CODECAVE(WindowUnfocusCave);
+	REGISTER_CODECAVE(InputPressedCave);
+	REGISTER_CODECAVE(InputHeldCave);
 	REGISTER_CODECAVE(ResetCave);
 }
 
@@ -148,7 +160,7 @@ bool Game::performCodeCaves()
 			scans.push_back(scn);
 
 			LOG("Searching for pattern:");
-			for (int i = 0; i < scn->patternSize; i++)
+			for (size_t i = 0; i < scn->patternSize; i++)
 			{
 				if (scn->pattern[i] == -1)
 					LOG(" " << std::dec << i << ": ??")
@@ -187,7 +199,7 @@ bool Game::performCodeCaves()
 	char* chars = static_cast<char*>(malloc(sizeof(char) * initChars));
 
 	{
-		for (auto x = 0; x < scans.size(); x++)
+		for (size_t x = 0; x < scans.size(); x++)
 			chars[x] = scans.at(x)->pattern[0];
 	}
 
@@ -231,7 +243,7 @@ bool Game::performCodeCaves()
 					if (i + s->patternSize >= bytesRead)
 						continue;
 					bool found = true;
-					for (int sx = 1; sx < s->patternSize; sx++)
+					for (size_t sx = 1; sx < s->patternSize; sx++)
 					{
 						// wildcard
 						if (s->pattern[sx] == -1)
@@ -291,10 +303,39 @@ bool Game::performCodeCaves()
 
 void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 {
-	LOG("Performing code cave at injection location " << injectLoc);
+	DWORD oldProtect;
+	VirtualProtectEx(gameHandle, reinterpret_cast<LPVOID>(injectLoc), cav->overwrittenInstructionSize(), PAGE_EXECUTE_READWRITE, &oldProtect);
+	bool doCallOrig = cav->shouldPrependOriginal();
 	size_t codeSize;
 	size_t codeSizeNoJmp;
-	char* ren = cav->render(this, injectLoc, &codeSize);
+	unsigned char* ren = (unsigned char*) cav->render(this, injectLoc, &codeSize, doCallOrig ? cav->overwrittenInstructionSize() : 0);
+
+	if (ren == NULL)
+	{
+		LOG("Removing matched instructions at location " << injectLoc);
+		// We just want to overwrite the instruction with nop
+		char* nopBuf = (char*)malloc(sizeof(char) * cav->overwrittenInstructionSize());
+		memset(nopBuf, 0x90, cav->overwrittenInstructionSize());
+		WriteProcessMemory(gameHandle, reinterpret_cast<LPVOID>(injectLoc), nopBuf, cav->overwrittenInstructionSize(), NULL);
+		VirtualProtectEx(gameHandle, reinterpret_cast<LPVOID>(injectLoc), cav->overwrittenInstructionSize(), oldProtect, NULL);
+		free(nopBuf);
+		return;
+	}
+
+	LOG("Performing code cave at injection location " << injectLoc);
+
+	// Read the original instructions
+	if (doCallOrig)
+	{
+		ReadProcessMemory(gameHandle, (LPVOID)injectLoc, ren, cav->overwrittenInstructionSize(), NULL);
+		LOG("Original instructions (keeping):");
+		for (int i = 0; i < cav->overwrittenInstructionSize(); i++)
+		{
+			std::cout << std::hex << ((int)ren[i]) << " ";
+		}
+		std::cout << std::endl;
+	}
+
 
 	// Now we need to make the return jump
 	// add 24 (twice what we need) bytes to be safe
@@ -302,6 +343,14 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 	codeSize += 5;
 	LPVOID cavLoc = VirtualAllocEx(gameHandle, nullptr, codeSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	LOG("Location of cave: " << std::hex << (reinterpret_cast<intptr_t>(cavLoc)) << std::dec);
+
+	// Adjust if its a call
+	if (ren[0] == 0xE8)
+	{
+		intptr_t* origPtr = reinterpret_cast<intptr_t*>(ren + 1);
+		// subtract the offset from origPtr and caveLocation
+		*origPtr -= reinterpret_cast<intptr_t>(cavLoc) - injectLoc;
+	}
 
 	// Now that we know where the code starts
 	// 5 bytes, 1 byte for E9 + 32 bit address
@@ -326,7 +375,6 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 	free(jmpBuf);
 
 	// Re-protect it
-	DWORD oldProtect;
 	VirtualProtectEx(gameHandle, cavLoc, codeSize, PAGE_EXECUTE_READ, &oldProtect);
 
 	// Now that we've injected the code, overwrite the target
@@ -345,12 +393,142 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 		overBuf[i] = 0x90;
 	}
 
-	VirtualProtectEx(gameHandle, reinterpret_cast<LPVOID>(injectLoc), cav->overwrittenInstructionSize(), PAGE_EXECUTE_READWRITE, &oldProtect);
 	WriteProcessMemory(gameHandle, reinterpret_cast<LPVOID>(injectLoc), overBuf, cav->overwrittenInstructionSize(), nullptr);
 	VirtualProtectEx(gameHandle, reinterpret_cast<LPVOID>(injectLoc), cav->overwrittenInstructionSize(), oldProtect, &oldProtect);
 	free(overBuf);
 }
 
+void Game::setInputsEnabled(bool b)
+{
+	if (localOffsetStorage->dev_base == nullptr)
+	{
+		readOffsets();
+		if (localOffsetStorage->dev_base == nullptr)
+			return;
+	}
+	localDevRegion.windowActive = b ? 0x01 : 0x0;
+	const DevRegion* s = &localDevRegion;
+	WriteProcessMemory(gameHandle, (LPVOID)(((intptr_t)localOffsetStorage->dev_base) + OFFSETOF(windowActive)), &localDevRegion.windowActive, sizeof(char), NULL);
+}
+
+void Game::setPlayerLives(int playerN, int lives)
+{
+	assert(playerN < 4);
+	auto addr = localOffsetStorage->player_states[playerN];
+	if (!addr) return;
+	// get offset
+	auto offset = (reinterpret_cast<intptr_t>(&players[0].state.lives) - reinterpret_cast<intptr_t>(&players[0].state));
+	int livesl = lives;
+	WriteProcessMemory(gameHandle, (LPVOID)((intptr_t)addr + offset), &livesl, sizeof(livesl), NULL);
+}
+
+void Game::resetPlayerHitCounters(int playerN)
+{
+	assert(playerN < 4);
+	auto addr = localOffsetStorage->player_states[playerN];
+	if (!addr) return;
+	// get offset
+	auto offset = (reinterpret_cast<intptr_t>(&players[0].state.total_hit_counter) - reinterpret_cast<intptr_t>(&players[0].state));
+	int hitsl = 0;
+	WriteProcessMemory(gameHandle, (LPVOID)((intptr_t)addr + offset), &hitsl, sizeof(hitsl), NULL);
+}
+
+void Game::resetPlayerBuntCounters(int playerN)
+{
+	assert(playerN < 4);
+	auto addr = localOffsetStorage->player_states[playerN];
+	if (!addr) return;
+	// get offset
+	auto offset = (reinterpret_cast<intptr_t>(&players[0].state.bunt_counter) - reinterpret_cast<intptr_t>(&players[0].state));
+	int hitsl = 0;
+	WriteProcessMemory(gameHandle, (LPVOID)((intptr_t)addr + offset), &hitsl, sizeof(hitsl), nullptr);
+}
+
+void Game::setInputImmediate(char input, bool set)
+{
+	char& inputs = localOffsetStorage->forcedInputs[0];
+	inputTimings.erase(input);
+	if (set)
+		inputs |= input;
+	else if (inputs & input)
+		inputs ^= input;
+}
+
+void Game::holdInputUntil(char input, TIME_POINT time)
+{
+	inputTimings[input] = time;
+	localOffsetStorage->forcedInputs[0] |= input;
+}
+
+void Game::updateInputs()
+{
+	TIME_POINT now = CLOCK_U::now();
+	std::vector<int> toUnset(inputTimings.size());
+	char& inputs = localOffsetStorage->forcedInputs[0];
+	for (auto& kv : inputTimings)
+	{
+		// if the time less than now
+		if (kv.second <= now)
+		{
+			// unset the button
+			// xor the first to unset it
+			// 00001 ^ 00001 = 00000
+			if (inputs & kv.first)
+				inputs ^= kv.first;
+			toUnset.push_back(kv.first);
+		}
+	}
+
+	for (auto& k : toUnset)
+		inputTimings.erase(k);
+}
+
+void Game::writeInputOverrides() const
+{
+	intptr_t forcedInputsAddr = reinterpret_cast<intptr_t>(remoteOffsetStorage) + (reinterpret_cast<intptr_t>(&localOffsetStorage->forcedInputs) - reinterpret_cast<intptr_t>(localOffsetStorage));
+	WriteProcessMemory(gameHandle, reinterpret_cast<LPVOID>(forcedInputsAddr), &localOffsetStorage->forcedInputs, sizeof(localOffsetStorage->forcedInputs), nullptr);
+	intptr_t forcePlayersAddr = reinterpret_cast<intptr_t>(remoteOffsetStorage) + (reinterpret_cast<intptr_t>(&localOffsetStorage->inputsForcePlayers) - reinterpret_cast<intptr_t>(localOffsetStorage));
+	WriteProcessMemory(gameHandle, reinterpret_cast<LPVOID>(forcePlayersAddr), &localOffsetStorage->inputsForcePlayers, sizeof(localOffsetStorage->inputsForcePlayers), nullptr);
+}
+
+void Game::resetInputs()
+{
+	inputTimings.clear();
+	memset(localOffsetStorage->forcedInputs, 0, sizeof(localOffsetStorage->forcedInputs));
+}
+
+
+void Game::readHitbox(Hitbox& box, intptr_t hitboxbase)
+{
+	// implement later
+}
+
+
+#define READ_STRUCT(STRUCT, STORNAME) if (localOffsetStorage->STORNAME) { ReadProcessMemory(gameHandle, localOffsetStorage->STORNAME, &STRUCT, sizeof(STRUCT), NULL); }
+void Game::readGameData()
+{
+	READ_STRUCT(localDevRegion, dev_base);
+	READ_STRUCT(localBallState, ball_state);
+	READ_STRUCT(localBallCoords, ball_coord);
+	READ_STRUCT(stage, stage_base);
+	for (int i = 0; i < 4; i++)
+	{
+		if (localOffsetStorage->player_bases[i] == nullptr)
+			continue;
+
+		ReadProcessMemory(gameHandle, localOffsetStorage->player_bases[i], &players[i].entity, sizeof(players[i].entity), nullptr);
+		ReadProcessMemory(gameHandle, localOffsetStorage->player_coords[i], &players[i].coords, sizeof(players[i].coords), nullptr);
+		ReadProcessMemory(gameHandle, localOffsetStorage->player_states[i], &players[i].state, sizeof(players[i].state), nullptr);
+
+		// Read hitboxes
+#if READ_HITBOXES
+		readHitbox(players[i].neutral_right_hitbox, players[i].entity.neutral_1_hitbox);
+		readHitbox(players[i].neutral_left_hitbox, players[i].entity.neutral_2_hitbox);
+		readHitbox(players[i].bunt_left_hitbox, players[i].entity.bunt1_hitbox);
+		// readHitbox(players[i].bunt_right_hitbox, players[i].entity.bunt);
+#endif
+	}
+}
 
 Game::~Game()
 {

@@ -10,7 +10,7 @@ SCAN_PATTERN(BallCave, 0x8B, 0x81, 0xCC, 0, 0, 0, 0x8B, 0x50, 0x70, 0x8B, 0x86,0
 RENDER(BallCave, {
 	// originalcode
 	// mov eax, [ecx + 000000CC]
-	a.mov(x86::eax, x86::ptr(x86::ecx, 0x0CC, sizeof(int32_t)));
+	// a.mov(x86::eax, x86::ptr(x86::ecx, 0x0CC, sizeof(int32_t)));
 
 	// mov[ballbase], esi
 	a.mov(PTO(ball_base), x86::esi);

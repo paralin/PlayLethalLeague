@@ -4,3 +4,6 @@
 [submodule "thirdparty/asmjit"]
 	path = thirdparty/asmjit
 	url = https://github.com/kobalicek/asmjit.git
+[submodule "thirdparty/MultiNEAT"]
+	path = thirdparty/MultiNEAT
+	url = https://github.com/peter-ch/MultiNEAT.git
