@@ -20,7 +20,6 @@ private:
 	std::shared_ptr<NEAT::Genome> genome;
 	std::shared_ptr<NEAT::Population> pop;
 	bool wasPlaying;
-	bool ballIsBunted;
 
 	int testN;
 	int individualFitness;
@@ -38,8 +37,6 @@ private:
 	std::shared_ptr<NEAT::NeuralNetwork> currentNet;
 
 	std::vector<double> inputs;
-
-	TIME_POINT timeBallNotBunted;
 
 public:
 	void newMatchStarted();

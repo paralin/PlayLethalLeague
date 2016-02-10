@@ -193,7 +193,6 @@ void LLNeural::playOneFrame()
 
 		game->setPlayerLives(0, 2);
 		game->setPlayerLives(1, 2);
-		ballIsBunted = false;
 
 		testN++;
 		if (deathCount >= NUM_DEATHS_PER_ITERATION || testN >= MAX_TESTS_PER_ITERATION)
@@ -227,7 +226,6 @@ void LLNeural::playOneFrame()
 				{
 					NLOG("===== FINISHED EVOLUTION =====");
 					NLOG("Best fitness: " << std::dec << bestFitnessEver);
-					saveToFile();
 					NLOG("Evolving!");
 					game->localOffsetStorage->forcedInputs[1] = 0xFF;
 					game->writeInputOverrides();
@@ -249,7 +247,7 @@ void LLNeural::playOneFrame()
 			NLOG("Individual: " << std::dec << (currentIndividual + 1) << "/" << pop->m_Species[currentSpecies].NumIndividuals());
 			// reset it
 			currentNet.reset();
-			pop->Save("population_evolving.dat");
+			saveToFile();
 		}
 	}
 	if (!playing)
@@ -297,15 +295,6 @@ void LLNeural::playOneFrame()
 	inputs[10] =game->players[1].coords.ycoord;
 	inputs[11] =game->players[1].state.special_meter;
 	inputs[12] =game->players[1].state.special_meter;
-
-	bool ballCurrentlyBunted = inputs[4] == 0x01;
-	if (!ballCurrentlyBunted && ballIsBunted)
-	{
-		// ball exited bunt
-		// store the time
-		timeBallNotBunted = CLOCK_U::now();
-	}
-	ballIsBunted = ballCurrentlyBunted;
 
 	currentNet->Flush();
 	currentNet->Input(inputs);
