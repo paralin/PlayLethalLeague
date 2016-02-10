@@ -398,6 +398,15 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 	free(overBuf);
 }
 
+void Game::sendTaunt()
+{
+	localOffsetStorage->forcedInputs[1] = 0xFF;
+	writeInputOverrides();
+	Sleep(100);
+	localOffsetStorage->forcedInputs[1] = 0x00;
+	writeInputOverrides();
+}
+
 void Game::setInputsEnabled(bool b)
 {
 	if (localOffsetStorage->dev_base == nullptr)

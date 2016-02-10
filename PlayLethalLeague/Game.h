@@ -87,6 +87,8 @@ public:
 	void resetPlayerHitCounters(int playerN);
 	void resetPlayerBuntCounters(int playerN);
 
+	void sendTaunt();
+
 	void resetInputs();
 
 	HANDLE gameHandle;

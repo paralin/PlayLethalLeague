@@ -46,7 +46,7 @@ NEAT::Parameters getParams()
 {
 	NEAT::Parameters params;
 
-	params.PopulationSize = 50;
+	params.PopulationSize = 70;
 	params.DynamicCompatibility = true;
 	params.WeightDiffCoeff = 4.0;
 	params.CompatTreshold = 2.0;
@@ -183,8 +183,9 @@ void LLNeural::playOneFrame()
 
 		if (game->players[0].state.lives > game->players[1].state.lives)
 		{
-			NLOG("We killed him! +200");
-			individualFitness += 200;
+			NLOG("We killed him! +300");
+			individualFitness += 300;
+			game->sendTaunt();
 		}
 		else
 			deathCount++;
@@ -228,18 +229,9 @@ void LLNeural::playOneFrame()
 					NLOG("===== FINISHED EVOLUTION =====");
 					NLOG("Best fitness: " << std::dec << bestFitnessEver);
 					saveToFile();
+					game->sendTaunt();
 					NLOG("Evolving!");
-					game->localOffsetStorage->forcedInputs[1] = 0xFF;
-					game->writeInputOverrides();
-					Sleep(100);
-					game->localOffsetStorage->forcedInputs[1] = 0x00;
-					game->writeInputOverrides();
 					pop->Epoch();
-					game->localOffsetStorage->forcedInputs[1] = 0xFF;
-					game->writeInputOverrides();
-					Sleep(100);
-					game->localOffsetStorage->forcedInputs[1] = 0x00;
-					game->writeInputOverrides();
 					currentSpecies = 0;
 				}
 			}
