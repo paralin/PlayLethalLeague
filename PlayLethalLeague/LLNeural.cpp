@@ -61,7 +61,7 @@ NEAT::Parameters getParams()
 	params.StagnationDelta = 20;
 	params.DeltaCoding = false;
 
-	params.OldAgeTreshold = 15;
+	params.OldAgeTreshold = 30;
 
 	params.PhasedSearching = false;
 	params.InnovationsForever = true;
@@ -94,7 +94,7 @@ NEAT::Parameters getParams()
 	params.CrossoverRate = 0.75;
 	params.MultipointCrossoverRate = 0.4;
 	params.SurvivalRate = 0.10;
-	params.EliteFraction = 0.03;
+	params.EliteFraction = 0.05;
 
 	return params;
 }
@@ -103,7 +103,7 @@ void LLNeural::loadFromFilesystem()
 {
 	NLOG(" == initializing from saved params == ");
 	pop = std::make_shared<NEAT::Population>(populationPath);
-	pop->m_Parameters = getParams();
+	// pop->m_Parameters = getParams();
 	calcBestFitnessEver();
 }
 
@@ -340,7 +340,7 @@ void LLNeural::playOneFrame()
 		float speedFactor = std::min(std::max(static_cast<float>(speed) - 100.0f, 0.0f) / (1300 - 100.0f), 1.0f);
 		if (bunts != lastBuntCount)
 		{
-			int points = 10;
+			int points = 20;
 			points += (int)(speedFactor * 200.0f);
 			lastBuntCount = bunts;
 			NLOG("We bunted the ball at speed " << speed << "! +" << points << "! Bunts: " << lastBuntCount);
@@ -351,6 +351,12 @@ void LLNeural::playOneFrame()
 			points += (int)(speedFactor * 300.0f);
 			lastBuntCount = bunts;
 			NLOG("We hit the ball at speed " << speed << "! +" << points << "! Hits: " << (lastHitCount - lastBuntCount));
+			if (ballIsBunted || (timeBallNotBunted > CLOCK_U::now() - std::chrono::milliseconds(50)))
+			{
+				timeBallNotBunted = timeBallNotBunted.min();
+				NLOG(" - hit was a bunted ball! POINT MULTIPLIER x2!");
+				points *= 2;
+			}
 			individualFitness += points;
 		}
 	}
