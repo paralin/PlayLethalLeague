@@ -29,6 +29,8 @@ private:
 
 	int lastHitCount;
 	int lastBuntCount;
+	int deathCount;
+	int bestFitnessEver;
 
 	const char* populationPath = "population.dat";
 
@@ -37,10 +39,11 @@ private:
 	std::vector<double> inputs;
 
 public:
-	static void newMatchStarted();
+	void newMatchStarted();
 	void playOneFrame();
 	void saveToFile() const;
 	void initFromScratch();
 	void loadFromFilesystem();
+	void calcBestFitnessEver();
 };
 

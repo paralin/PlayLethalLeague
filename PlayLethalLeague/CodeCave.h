@@ -49,7 +49,7 @@ public: \
 	}
 #define RENDER_NOP(CLASS) unsigned char* CLASS::render(Game* game, intptr_t injectPoint, size_t* size, size_t prependSpace) { return NULL; }
 // if (code_size != alloc_size) codeBuf = realloc(codeBuf, code_size);
-#define SCAN_PATTERN_NONE(CLASS) unsigned char* CLASS:getScanPattern(size_t* size) { return NULL; }
+#define SCAN_PATTERN_NONE(CLASS) char* CLASS::getScanPattern(size_t* size) { return NULL; }
 #define SCAN_PATTERN(CLASS, ...) char* CLASS::getScanPattern(size_t* size) { \
 		const char inject_point[] = { __VA_ARGS__ }; \
 		char* buf = static_cast<char*>(malloc(sizeof(char) * (*size = sizeof(inject_point)))); \

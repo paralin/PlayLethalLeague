@@ -4,8 +4,6 @@
 #include "stdafx.h"
 #include "Game.h"
 #include "Util.h"
-#include <ctime>
-#include <chrono>
 #include "LLNeural.h"
 #define USE_NEURAL
 
@@ -82,7 +80,6 @@ int main()
 
 	bool wasInGame = false;
 	bool playedOneFrame = true;
-	char currentTagValue = 0;
 	while (true)
 	{
 		// make sure we are only overwriting inputs for our player
@@ -93,7 +90,8 @@ int main()
 #ifdef PRINT_VALUES
 		Sleep(2000);
 #else
-		Sleep(100);
+		// Really minimal sleep here
+		Sleep(5);
 #endif
 
 		g.readOffsets();
@@ -175,13 +173,6 @@ int main()
 			PRINT_VAR("y", ycoord);
 		}
 #endif
-
-		char tagValue = g.localBallState.ballTag;
-		if (currentTagValue != tagValue)
-		{
-			LOG("Ball tag changed: " << std::hex << (static_cast<int>(currentTagValue)) << " -> " << (static_cast<int>(tagValue)));
-			currentTagValue = tagValue;
-		}
 
 #ifdef USE_NEURAL
 		neural.playOneFrame();
