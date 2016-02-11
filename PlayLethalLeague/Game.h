@@ -83,6 +83,7 @@ public:
 	void updateInputs();
 
 	void setPlayerLives(int playerN, int lives);
+	void setPlayerExists(int playerN, bool exists);
 
 	void resetPlayerHitCounters(int playerN);
 	void resetPlayerBuntCounters(int playerN);

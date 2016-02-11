@@ -402,7 +402,7 @@ void Game::sendTaunt()
 {
 	localOffsetStorage->forcedInputs[1] = 0xFF;
 	writeInputOverrides();
-	Sleep(100);
+	Sleep(50);
 	localOffsetStorage->forcedInputs[1] = 0x00;
 	writeInputOverrides();
 }
@@ -419,6 +419,19 @@ void Game::setInputsEnabled(bool b)
 	const DevRegion* s = &localDevRegion;
 	WriteProcessMemory(gameHandle, (LPVOID)(((intptr_t)localOffsetStorage->dev_base) + OFFSETOF(windowActive)), &localDevRegion.windowActive, sizeof(char), NULL);
 }
+
+void Game::setPlayerExists(int playerN, bool exists)
+{
+	char targ = exists ? 0x01 : 0x0;
+
+	if (players[playerN].state.exists != targ)
+	{
+		auto addr = reinterpret_cast<intptr_t>(localOffsetStorage->player_states[playerN]);
+		intptr_t offset = reinterpret_cast<intptr_t>(&players[0].state.exists) - reinterpret_cast<intptr_t>(&players[0].state);
+		WriteProcessMemory(gameHandle, reinterpret_cast<LPVOID>(addr + offset), &targ, sizeof(char), nullptr);
+	}
+}
+
 
 void Game::setPlayerLives(int playerN, int lives)
 {

@@ -32,6 +32,13 @@ private:
 	int lastBuntCount;
 	int deathCount;
 	int bestFitnessEver;
+	int lastBallSpeed;
+	int swingCount;
+	int bestFitnessThisSpecies;
+	int hitsThisIndividual;
+
+	TIME_POINT timeSinceLastFitness;
+	int lastFitness = 0;
 
 	const char* populationPath = "population.dat";
 
@@ -40,6 +47,9 @@ private:
 	std::vector<double> inputs;
 
 	TIME_POINT timeBallNotBunted;
+	int hitsStartedSwinging;
+	bool wasSwinging;
+	double bestAccuracy;
 
 public:
 	void newMatchStarted();
