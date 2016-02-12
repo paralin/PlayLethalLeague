@@ -6,24 +6,26 @@
 #include "GameStructs.h"
 #include <map>
 #include <chrono>
+#include "PatternScan.h"
+
+class CodeCave;
 #define APP_ID 261180
 
 #define CLOCK_U std::chrono::steady_clock
 #define TIME_POINT std::chrono::time_point<CLOCK_U>
 
 // Don't dereference these!
-struct GameOffsetStorage
+struct GameStorage
 {
-	// Offsets
 	void* ball_base;
-	void* ball_coord;
-	void* ball_state;
+	EntityCoords* ball_coord;
+	BallState* ball_state;
 	void* gamerule_set;
-	void* dev_base;
-	void* stage_base;
-	void* player_bases[4];
-	void* player_coords[4];
-	void* player_states[4];
+	DevRegion* dev_base;
+	Stage* stage_base;
+	EntityBase* player_bases[4];
+	EntityCoords* player_coords[4];
+	PlayerState* player_states[4];
 	void* player_spawn;
 
 	// Storage
@@ -50,6 +52,16 @@ struct GameOffsetStorage
 	char inputsForcePlayers[4];
 };
 
+struct CodeCaveScan
+{
+	std::shared_ptr<CodeCave> cave;
+	std::shared_ptr<PatternScan> patterns;
+	unsigned char* pattern;
+	size_t patternSize;
+	const char* name;
+	void* foundAddress;
+};
+
 class CodeCave;
 class Game
 {
@@ -58,61 +70,39 @@ public:
 	~Game();
 
 	bool locateExecutable();
-	static void killProcesses();
 
-	void launch() const;
-	bool attach();
-
-	void suspend() const;
-	void unsuspend() const;
-
-	void initOffsetStorage();
-	void readOffsets() const;
+	void checkResetOffsets() const;
 
 	bool performCodeCaves();
 	void performCodeCave(intptr_t injectLoc, CodeCave* cav);
 
-	void readGameData();
-
-	void setInputsEnabled(bool b);
+	void setInputsEnabled(bool b) const;
 
 	void setInputImmediate(char input, bool set);
-	void holdInputUntil(char input, TIME_POINT time);;
+	void holdInputUntil(char input, TIME_POINT time);
+	void clearCaves() { caves.clear(); patternScans.clear(); };
 
-	void writeInputOverrides() const;
 	void updateInputs();
 
-	void setPlayerLives(int playerN, int lives);
-	void setPlayerExists(int playerN, bool exists);
+	void setPlayerLives(int playerN, int lives) const;
+	void setPlayerExists(int playerN, bool exists) const;
 
-	void resetPlayerHitCounters(int playerN);
-	void resetPlayerBuntCounters(int playerN);
+	void resetPlayerHitCounters(int playerN) const;
+	void resetPlayerBuntCounters(int playerN) const;
 
-	void sendTaunt();
-
+	void sendTaunt() const;
 	void resetInputs();
 
 	HANDLE gameHandle;
 	DWORD processId;
 
-private:
 	std::string executablePath;
 	std::string steamPath;
 
 	std::vector<std::shared_ptr<CodeCave>> caves;
+	std::vector<std::shared_ptr<PatternScan>> patternScans;
 	std::map<char, TIME_POINT> inputTimings;
 
-	static void readHitbox(Hitbox& box, intptr_t plyrbase);
-
-public:
 	// Local copy
-	GameOffsetStorage* localOffsetStorage;
-	// Position of the remote GameOffsetStorage
-	void* remoteOffsetStorage;
-
-	DevRegion localDevRegion;
-	BallState localBallState;
-	EntityCoords localBallCoords;
-	Player players[4];
-	Stage stage;
+	GameStorage* gameData;
 };

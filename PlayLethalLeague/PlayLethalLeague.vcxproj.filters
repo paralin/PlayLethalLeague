@@ -22,6 +22,12 @@
     <Filter Include="Header Files\multineat">
       <UniqueIdentifier>{b02747bd-50b2-485d-87a1-eb4ff802d5f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\detours">
+      <UniqueIdentifier>{a84bb6ea-ab22-4cf2-bd81-a22f9c6c28c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\asmjit">
+      <UniqueIdentifier>{d1d67438-9e4b-41a6-b1f9-be96e0ac73fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -34,9 +40,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CodeCave.h">
@@ -90,18 +93,21 @@
     <ClInclude Include="LLNeural.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PatternScan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\detours\detours.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\detours\detver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PatternScanner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BallCave.cpp">
@@ -165,6 +171,99 @@
       <Filter>Source Files\caves</Filter>
     </ClCompile>
     <ClCompile Include="LLNeural.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DllMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputUpdatePattern.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\creatwth.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\detours.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\disasm.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\image.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\modules.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\assembler.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compiler.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compilercontext.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\constpool.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\containers.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\cpuinfo.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\globals.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\hlstream.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\logger.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\operand.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\runtime.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\utils.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\vmem.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\zone.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86assembler.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compiler.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compilercontext.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compilerfunc.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86cpuinfo.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86inst.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand_regs.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86scheduler.cpp">
+      <Filter>Source Files\asmjit</Filter>
+    </ClCompile>
+    <ClCompile Include="PatternScanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

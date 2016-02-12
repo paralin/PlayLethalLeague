@@ -72,7 +72,7 @@ HANDLE findProcessByName(const char* name)
 	{
 		while (Process32Next(snapshot, &entry) == TRUE)
 		{
-			if (stricmp(entry.szExeFile, name) == 0)
+			if (_stricmp(entry.szExeFile, name) == 0)
 			{
 				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 				if (hProcess != nullptr)

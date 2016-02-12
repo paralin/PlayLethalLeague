@@ -19,14 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{48B334F4-067E-4F50-9890-F07BBBC00B28}</ProjectGuid>
+    <ProjectGuid>{341720B9-3874-40D5-91AC-08004DF18989}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>PlayLethalLeague</RootNamespace>
+    <RootNamespace>LLInjector</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -83,16 +83,16 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ASMJIT_STATIC;DETOURS_X86;DETOURS_32BIT;WIN32;NOMINMAX;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)/thirdparty/asmjit/src/;C:/Boost/;$(SolutionDir)/detours/</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -101,6 +101,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +116,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +133,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,85 +146,19 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\detours\detours.h" />
-    <ClInclude Include="..\detours\detver.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Assert.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genes.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genome.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Innovation.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Parameters.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Population.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PythonBindings.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Random.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Species.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Substrate.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Utils.h" />
-    <ClInclude Include="AllCaves.h" />
-    <ClInclude Include="CodeCave.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="GameStructs.h" />
-    <ClInclude Include="LLNeural.h" />
-    <ClInclude Include="PatternScan.h" />
-    <ClInclude Include="PatternScanner.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\detours\creatwth.cpp" />
-    <ClCompile Include="..\detours\detours.cpp" />
-    <ClCompile Include="..\detours\disasm.cpp" />
-    <ClCompile Include="..\detours\image.cpp" />
-    <ClCompile Include="..\detours\modules.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\assembler.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compiler.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compilercontext.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\constpool.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\containers.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\cpuinfo.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\globals.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\hlstream.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\logger.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\operand.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\runtime.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\utils.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\vmem.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\zone.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86assembler.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compiler.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compilercontext.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86compilerfunc.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86cpuinfo.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86inst.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand_regs.cpp" />
-    <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86scheduler.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Genome.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Innovation.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Parameters.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Population.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PythonBindings.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Random.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Species.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Substrate.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Utils.cpp" />
-    <ClCompile Include="BallCave.cpp" />
-    <ClCompile Include="InputOverrideCave.cpp" />
-    <ClCompile Include="DevCave.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameRulesCave.cpp" />
-    <ClCompile Include="InputUpdatePattern.cpp" />
-    <ClCompile Include="LLNeural.cpp" />
-    <ClCompile Include="DllMain.cpp" />
-    <ClCompile Include="PatternScanner.cpp" />
-    <ClCompile Include="PlayerCave.cpp" />
-    <ClCompile Include="PlayerSpawnCave.cpp" />
-    <ClCompile Include="ResetCave.cpp" />
-    <ClCompile Include="StageCave.cpp" />
-    <ClCompile Include="WindowFocusCave.cpp" />
+    <ClCompile Include="LLInjector.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

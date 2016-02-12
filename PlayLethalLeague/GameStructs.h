@@ -158,21 +158,6 @@ struct Hitbox
 	HitboxInfo info;
 };
 
-struct Player
-{
-	EntityBase entity;
-	EntityCoords coords;
-	PlayerState state;
-
-	Hitbox neutral_right_hitbox;
-	Hitbox neutral_left_hitbox;
-	Hitbox smash_top_hitbox;
-	Hitbox smash_right_hitbox;
-	Hitbox smash_left_hitbox;
-	Hitbox bunt_right_hitbox;
-	Hitbox bunt_left_hitbox;
-};
-
 struct Stage
 {
 	char pad0[0x1c];

@@ -165,7 +165,7 @@ void LLNeural::saveToFile() const
 
 void LLNeural::playOneFrame()
 {
-	const GameOffsetStorage* offs = game->localOffsetStorage;
+	const GameStorage* gd = game->gameData;
 
 	// Determine if we are actually playing (both players are spawned and ball is hittable
 	// ball not spawned states: 
@@ -183,10 +183,10 @@ void LLNeural::playOneFrame()
 	//  - 50 pts for bunting the ball
 	//  - 200 pts for winning the life
 
-	bool playing = !game->players[0].state.respawn_timer
-		&& game->localBallState.state != 14
-		&& game->localBallState.state != 1;
-	int ballSpeed = game->localBallState.ballSpeed;
+	bool playing = !gd->player_states[0]->respawn_timer
+		&& gd->ball_state->state != 14
+		&& gd->ball_state->state != 1;
+	int ballSpeed = gd->ball_state->ballSpeed;
 
 	char tarP2Exist = pop->m_Parameters.TrainingHitOnly ? 0x0 : 0x01;
 	game->setPlayerExists(1, tarP2Exist);
@@ -195,7 +195,7 @@ void LLNeural::playOneFrame()
 	{
 		wasPlaying = playing;
 
-		if (game->players[0].state.lives > game->players[1].state.lives)
+		if (gd->player_states[0]->lives > gd->player_states[1]->lives)
 		{
 			NLOG("We killed him! +300");
 			individualFitness += 300;
@@ -326,17 +326,17 @@ void LLNeural::playOneFrame()
 	// range is from -.5 -> .5
 	// multiply by 2
 	// range is from -1 to 1
-	double stageX = game->stage.x_origin * COORD_OFFSET;
-	double stageXSize = game->stage.x_size * COORD_OFFSET;
-	double stageY = game->stage.y_origin * COORD_OFFSET;
-	double stageYSize = game->stage.y_size * COORD_OFFSET;
-	inputs[0] = TO_INPUT_RANGE(game->players[0].coords.xcoord - stageX, stageXSize);
-	inputs[1] = TO_INPUT_RANGE(game->players[0].coords.ycoord - stageY, stageYSize);
+	double stageX = game->gameData->stage_base->x_origin * COORD_OFFSET;
+	double stageXSize = game->gameData->stage_base->x_size * COORD_OFFSET;
+	double stageY = game->gameData->stage_base->y_origin * COORD_OFFSET;
+	double stageYSize = game->gameData->stage_base->y_size * COORD_OFFSET;
+	inputs[0] = TO_INPUT_RANGE(game->gameData->player_coords[0]->xcoord - stageX, stageXSize);
+	inputs[1] = TO_INPUT_RANGE(game->gameData->player_coords[0]->ycoord - stageY, stageYSize);
 	// 0 or 1
-	inputs[2] = game->players[0].state.facing_direction ? -1 : 1;
+	inputs[2] = game->gameData->player_states[0]->facing_direction ? -1 : 1;
 
-	double ballPosX = TO_INPUT_RANGE(game->localBallCoords.xcoord - stageX, stageXSize);
-	double ballPosY = TO_INPUT_RANGE(game->localBallCoords.ycoord - stageY, stageYSize);
+	double ballPosX = TO_INPUT_RANGE(game->gameData->ball_coord->xcoord - stageX, stageXSize);
+	double ballPosY = TO_INPUT_RANGE(game->gameData->ball_coord->ycoord - stageY, stageYSize);
 	// ball pose rel x
 	// ball pose rel y
 	inputs[3] = ballPosX - inputs[0];
@@ -370,7 +370,7 @@ void LLNeural::playOneFrame()
 		inputs[14] = 0;
 		*/
 
-	const int& ballState = game->localBallState.state;
+	const int& ballState = gd->ball_state->state;
 	bool ballCurrentlyBunted = ballState == 10;
 	if (!ballCurrentlyBunted && ballIsBunted)
 	{
@@ -379,7 +379,7 @@ void LLNeural::playOneFrame()
 		timeBallNotBunted = CLOCK_U::now();
 	}
 	ballIsBunted = ballCurrentlyBunted;
-	bool currentlySwinging = game->players[0].state.character_state == 0x01;
+	bool currentlySwinging = gd->player_states[0]->character_state == 0x01;
 
 	currentNet->Flush();
 	currentNet->Input(inputs);
@@ -407,8 +407,8 @@ void LLNeural::playOneFrame()
 		justFinishedSwinging = true;
 
 	// Calculate points!
-	auto& hits = game->players[0].state.total_hit_counter;
-	auto& bunts = game->players[0].state.bunt_counter;
+	auto& hits = gd->player_states[0]->total_hit_counter;
+	auto& bunts = gd->player_states[0]->bunt_counter;
 
 	if (!wasSwinging && currentlySwinging)
 	{
@@ -464,10 +464,10 @@ void LLNeural::playOneFrame()
 	if (timeSinceLastFitness < CLOCK_U::now() - std::chrono::seconds(30))
 	{
 		NLOG("No progress for 30 seconds!");
-		game->localBallState.direction = 0;
-		game->localBallState.ballSpeed = 8;
-		game->localBallState.state = 8;
-		game->localBallState.ballTag = 0x01;
+		gd->ball_state->direction = 0;
+		gd->ball_state->ballSpeed = 8;
+		gd->ball_state->state = 8;
+		gd->ball_state->ballTag = 0x01;
 		// re-init the net
 		currentNet.reset();
 		individualFitness = lastFitness = 0;

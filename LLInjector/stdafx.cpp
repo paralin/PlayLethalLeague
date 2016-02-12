@@ -1,5 +1,5 @@
 // stdafx.cpp : source file that includes just the standard includes
-// PlayLethalLeague.pch will be the pre-compiled header
+// LLInjector.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"
