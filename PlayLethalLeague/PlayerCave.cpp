@@ -53,19 +53,19 @@ RENDER(PlayerCave, {
 
 	// move to player bases[0] + 4 * index esi
 	// mov [p1base+eax],esi
-	a.mov(x86::ptr(x86::eax, reinterpret_cast<intptr_t>(&s->player_bases[0]), sizeof(void*)), x86::esi);
+	a.mov(x86::ptr(x86::eax, reinterpret_cast<intptr_t>(&s->player_bases), sizeof(void*)), x86::esi);
 
 	// mov ebx,[esi+14]
 	a.mov(x86::ebx, x86::ptr(x86::esi, 0x14));
 
 	// mov [p1coords+eax],ebx
-	a.mov(x86::ptr(x86::eax, (intptr_t)(&s->player_coords[0]), sizeof(void*)), x86::ebx);
+	a.mov(x86::ptr(x86::eax, (intptr_t)(&s->player_coords), sizeof(void*)), x86::ebx);
 
 	// mov ebx,[esi+194]
 	a.mov(x86::ebx, x86::ptr(x86::esi, 0x194));
 
 	// mov [p1state+eax],ebx
-	a.mov(x86::ptr(x86::eax, (intptr_t)(s->player_states[0]), sizeof(void*)), x86::ebx);
+	a.mov(x86::ptr(x86::eax, (intptr_t)(s->player_states), sizeof(void*)), x86::ebx);
 
 	// mov eax,[currentPlayer]
 	a.mov(x86::eax, PTO(currentPlayer));

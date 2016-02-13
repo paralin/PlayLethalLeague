@@ -6,6 +6,13 @@
 #include <cassert>
 #include "PatternScanner.h"
 
+void __stdcall callHookedFrameTick(Game* g)
+{
+	g->hookedFrameTick();
+}
+
+void (__stdcall* ptr_to_callHookedFrameTick)(Game* g) = callHookedFrameTick;
+
 #define FREE_HANDLE(thing) if (thing != nullptr) {CloseHandle(thing);} thing = nullptr;
 #define REGISTER_CODECAVE(CLASS) caves.push_back(std::make_shared<CLASS>());
 #define REGISTER_PATTSCAN(CLASS) patternScans.push_back(std::make_shared<CLASS>());
@@ -13,26 +20,68 @@
 #define ZERO_STRUCT(stru) ZeroMemory(&stru, sizeof(stru));
 Game::Game() : 
 	gameHandle(GetCurrentProcess()), 
-	processId(0) 
+	processId(0) ,
+	wasInGame(false),
+	playedOneFrame(false)
 {
 	gameData = static_cast<GameStorage*>(VirtualAlloc(NULL, sizeof(GameStorage), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	memset(gameData, 0, sizeof(GameStorage));
+	gameData->frameHookAddress = ptr_to_callHookedFrameTick;
+	neural = std::make_shared<LLNeural>(this);
+
+	printedHookSuccessful = false;
 
 	LOG("Location of storage: " << std::hex << gameData);
 
 	REGISTER_CODECAVE(DevCave); // OK
 	REGISTER_CODECAVE(BallCave); // OK
-
-	REGISTER_CODECAVE(GameRulesCave);
+	// REGISTER_CODECAVE(GameRulesCave);
 	REGISTER_CODECAVE(StageCave);
 	REGISTER_CODECAVE(PlayerCave);
+
+	/*
 	// REGISTER_CODECAVE(PlayerSpawnCave);
 	// REGISTER_CODECAVE(WindowRefocusCave);
+	*/
+
 	REGISTER_CODECAVE(WindowUnfocusCave);
 	REGISTER_CODECAVE(InputPressedCave);
 	REGISTER_CODECAVE(InputHeldCave);
-
 	REGISTER_CODECAVE(ResetCave);
+	REGISTER_CODECAVE(StartOfFrameCave);
+	// REGISTER_CODECAVE(DeathCave);
+}
+
+void Game::hookedFrameTick()
+{
+	if (!printedHookSuccessful)
+	{
+		LOG("Hooked frame tick successfully.");
+		printedHookSuccessful = true;
+	}
+
+	gameData->inputsForcePlayers[0] = 0x01;
+	setInputsEnabled(true);
+	checkResetOffsets();
+	updateInputs();
+
+	bool isInGame = gameData->ball_base && gameData->ball_state && gameData->ball_coord;
+	if (isInGame != wasInGame)
+	{
+		LOG("=== Entered a new Match ===");
+		if (playedOneFrame)
+			neural->newMatchStarted();
+		playedOneFrame = false;
+	}
+	if (!isInGame && wasInGame)
+		resetInputs();
+	wasInGame = isInGame;
+
+	if (!isInGame)
+		return;
+	playedOneFrame = true;
+
+	neural->playOneFrame();
 }
 
 
@@ -182,7 +231,7 @@ bool Game::performCodeCaves()
 	DoSuspendOtherThreads(suspended);
 	LOG("Other threads suspended.")
 
-	LOG("Starting searches...");
+		LOG("Starting searches...");
 	PatternScanner::search(llmod.modBaseAddr, llmod.modBaseSize, scans);
 	LOG("Searches complete, performing injections...");
 

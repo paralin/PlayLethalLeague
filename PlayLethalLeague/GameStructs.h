@@ -39,6 +39,9 @@ struct BallState
 	char direction;
 	char pad6[0x03];
 	int hitCount;
+	char pad7[0x1C];
+	int serveResetCounter;
+	int serveLowerCounter;
 };
 
 struct EntityCoords

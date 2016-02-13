@@ -105,6 +105,9 @@
     <ClInclude Include="PatternScanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -175,9 +178,6 @@
     </ClCompile>
     <ClCompile Include="DllMain.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputUpdatePattern.cpp">
-      <Filter>Source Files\caves</Filter>
     </ClCompile>
     <ClCompile Include="..\detours\creatwth.cpp">
       <Filter>Source Files\detours</Filter>
@@ -265,6 +265,12 @@
     </ClCompile>
     <ClCompile Include="PatternScanner.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputUpdateCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
+    <ClCompile Include="DeathCave.cpp">
+      <Filter>Source Files\caves</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

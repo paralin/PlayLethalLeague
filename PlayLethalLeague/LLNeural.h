@@ -1,10 +1,11 @@
 #pragma once
-#include "Game.h"
 #include "../thirdparty/MultiNEAT/src/Parameters.h"
 #include "../thirdparty/MultiNEAT/src/Random.h"
 #include "../thirdparty/MultiNEAT/src/Genome.h"
 #include "../thirdparty/MultiNEAT/src/Population.h"
+#include "Utils.h"
 
+class Game;
 class LLNeural
 {
 public:
@@ -37,7 +38,7 @@ private:
 	int bestFitnessThisSpecies;
 	int hitsThisIndividual;
 
-	TIME_POINT timeSinceLastFitness;
+	DWORD timeIndividualStarted;
 	int lastFitness = 0;
 
 	const char* populationPath = "population.dat";
@@ -46,10 +47,14 @@ private:
 
 	std::vector<double> inputs;
 
-	TIME_POINT timeBallNotBunted;
+	DWORD timeBallNotBunted;
 	int hitsStartedSwinging;
 	bool wasSwinging;
 	double bestAccuracy;
+	bool forceNewIndividual;
+	DWORD timeNextUpdate;
+	bool playedOneFrame;
+	double maxAccuracyLastRound;
 
 public:
 	void newMatchStarted();

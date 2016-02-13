@@ -7,12 +7,11 @@
 #include <map>
 #include <chrono>
 #include "PatternScan.h"
+#include "LLNeural.h"
+#include "Utils.h"
 
 class CodeCave;
 #define APP_ID 261180
-
-#define CLOCK_U std::chrono::steady_clock
-#define TIME_POINT std::chrono::time_point<CLOCK_U>
 
 // Don't dereference these!
 struct GameStorage
@@ -50,6 +49,12 @@ struct GameStorage
 	// Which players should have their inputs set.
 	// Set the indexes to 1
 	char inputsForcePlayers[4];
+
+	// Address of frame hook function
+	void* frameHookAddress;
+
+	// Remove lives on deaths
+	char decrementLifeOnDeath;
 };
 
 struct CodeCaveScan
@@ -93,6 +98,9 @@ public:
 	void sendTaunt() const;
 	void resetInputs();
 
+	// Hooked function for frame tick!
+	void hookedFrameTick();
+
 	HANDLE gameHandle;
 	DWORD processId;
 
@@ -103,6 +111,12 @@ public:
 	std::vector<std::shared_ptr<PatternScan>> patternScans;
 	std::map<char, TIME_POINT> inputTimings;
 
+	bool printedHookSuccessful;
+	bool wasInGame;
+	bool playedOneFrame;
+
 	// Local copy
 	GameStorage* gameData;
+
+	std::shared_ptr<LLNeural> neural;
 };
