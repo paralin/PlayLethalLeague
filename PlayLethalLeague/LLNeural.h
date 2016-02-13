@@ -1,9 +1,4 @@
 #pragma once
-#include "../thirdparty/MultiNEAT/src/Parameters.h"
-#include "../thirdparty/MultiNEAT/src/Random.h"
-#include "../thirdparty/MultiNEAT/src/Genome.h"
-#include "../thirdparty/MultiNEAT/src/Population.h"
-#include "Utils.h"
 #include <mutex>
 
 class Game;
@@ -16,12 +11,6 @@ public:
 private:
 	Game* game;
 
-	NEAT::Parameters neatParams;
-	NEAT::RNG rng;
-
-	std::shared_ptr<NEAT::Genome> genome;
-	std::shared_ptr<NEAT::Population> pop;
-	std::shared_ptr<NEAT::Substrate> substrate;
 
 	void initSubstrate();
 
@@ -45,12 +34,6 @@ private:
 	DWORD timeIndividualStarted;
 	int lastFitness = 0;
 
-	const char* populationPath = "population.dat";
-
-	std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>> currentNet;
-
-	std::vector<double> inputs;
-
 	DWORD timeBallNotBunted;
 	int hitsStartedSwinging;
 	bool wasSwinging;
@@ -62,14 +45,6 @@ private:
 	DWORD resetLivesUntil;
 
 	std::mutex logMutex;
-	std::mutex queueAccessMutex;
-	std::queue<std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>>> individualQueue;
-	std::queue<std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>>> readyQueue;
-
-	std::vector<std::thread> workQueueThreads;
-
-	void workQueueThread();
-	void queueIndividuals();
 
 public:
 	void newMatchStarted();

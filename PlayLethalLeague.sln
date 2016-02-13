@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlayLethalLeague", "PlayLethalLeague\PlayLethalLeague.vcxproj", "{48B334F4-067E-4F50-9890-F07BBBC00B28}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LLInjector", "LLInjector\LLInjector.vcxproj", "{341720B9-3874-40D5-91AC-08004DF18989}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -29,18 +27,6 @@ Global
 		{48B334F4-067E-4F50-9890-F07BBBC00B28}.Static Release|x64.Build.0 = Release|x64
 		{48B334F4-067E-4F50-9890-F07BBBC00B28}.Static Release|x86.ActiveCfg = Release|Win32
 		{48B334F4-067E-4F50-9890-F07BBBC00B28}.Static Release|x86.Build.0 = Release|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Debug|x64.ActiveCfg = Debug|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Debug|x64.Build.0 = Debug|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Debug|x86.ActiveCfg = Debug|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Debug|x86.Build.0 = Debug|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Release|x64.ActiveCfg = Release|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Release|x64.Build.0 = Release|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Release|x86.ActiveCfg = Release|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Release|x86.Build.0 = Release|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Static Release|x64.ActiveCfg = Release|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Static Release|x64.Build.0 = Release|x64
-		{341720B9-3874-40D5-91AC-08004DF18989}.Static Release|x86.ActiveCfg = Release|Win32
-		{341720B9-3874-40D5-91AC-08004DF18989}.Static Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

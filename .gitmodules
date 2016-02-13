@@ -7,3 +7,18 @@
 [submodule "thirdparty/MultiNEAT"]
 	path = thirdparty/MultiNEAT
 	url = https://github.com/peter-ch/MultiNEAT.git
+[submodule "thirdparty/DeepCL"]
+	path = thirdparty/DeepCL
+	url = https://github.com/hughperkins/DeepCL.git
+[submodule "thirdparty/clBLAS"]
+	path = thirdparty/clBLAS
+	url = https://github.com/clMathLibraries/clBLAS.git
+[submodule "thirdparty/EasyCL"]
+	path = thirdparty/EasyCL
+	url = https://github.com/hughperkins/EasyCL.git
+[submodule "thirdparty/deep_q_rl"]
+	path = thirdparty/deep_q_rl
+	url = https://github.com/spragunr/deep_q_rl.git
+[submodule "thirdparty/CNTK"]
+	path = thirdparty/CNTK
+	url = https://github.com/Microsoft/CNTK.git

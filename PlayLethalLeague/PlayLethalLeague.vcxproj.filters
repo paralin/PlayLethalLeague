@@ -16,15 +16,6 @@
     <Filter Include="Source Files\caves">
       <UniqueIdentifier>{6bfe234d-189a-4d83-9c91-63845c6747f7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\multineat">
-      <UniqueIdentifier>{d34a2adb-893b-4477-8450-42030b7f955f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\multineat">
-      <UniqueIdentifier>{b02747bd-50b2-485d-87a1-eb4ff802d5f4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\detours">
-      <UniqueIdentifier>{a84bb6ea-ab22-4cf2-bd81-a22f9c6c28c5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\asmjit">
       <UniqueIdentifier>{d1d67438-9e4b-41a6-b1f9-be96e0ac73fa}</UniqueIdentifier>
     </Filter>
@@ -50,45 +41,6 @@
     </ClInclude>
     <ClInclude Include="GameStructs.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Assert.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genes.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genome.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Innovation.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Parameters.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Population.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PythonBindings.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Random.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Species.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Substrate.h">
-      <Filter>Header Files\multineat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Utils.h">
-      <Filter>Header Files\multineat</Filter>
     </ClInclude>
     <ClInclude Include="LLNeural.h">
       <Filter>Header Files</Filter>
@@ -134,39 +86,6 @@
     <ClCompile Include="PlayerSpawnCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Genome.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Innovation.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Parameters.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Population.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PythonBindings.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Random.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Species.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Substrate.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Utils.cpp">
-      <Filter>Source Files\multineat</Filter>
-    </ClCompile>
     <ClCompile Include="WindowFocusCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
@@ -178,21 +97,6 @@
     </ClCompile>
     <ClCompile Include="DllMain.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\detours\creatwth.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\detours\detours.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\detours\disasm.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\detours\image.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\detours\modules.cpp">
-      <Filter>Source Files\detours</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\assembler.cpp">
       <Filter>Source Files\asmjit</Filter>

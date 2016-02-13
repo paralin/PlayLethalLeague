@@ -145,19 +145,6 @@
   <ItemGroup>
     <ClInclude Include="..\detours\detours.h" />
     <ClInclude Include="..\detours\detver.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Assert.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genes.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Genome.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Innovation.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Parameters.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Population.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\PythonBindings.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Random.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Species.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Substrate.h" />
-    <ClInclude Include="..\thirdparty\MultiNEAT\src\Utils.h" />
     <ClInclude Include="AllCaves.h" />
     <ClInclude Include="CodeCave.h" />
     <ClInclude Include="Game.h" />
@@ -170,11 +157,6 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\detours\creatwth.cpp" />
-    <ClCompile Include="..\detours\detours.cpp" />
-    <ClCompile Include="..\detours\disasm.cpp" />
-    <ClCompile Include="..\detours\image.cpp" />
-    <ClCompile Include="..\detours\modules.cpp" />
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\assembler.cpp" />
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compiler.cpp" />
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\compilercontext.cpp" />
@@ -198,17 +180,6 @@
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand.cpp" />
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86operand_regs.cpp" />
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86scheduler.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Genome.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Innovation.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\NeuralNetwork.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Parameters.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PhenotypeBehavior.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Population.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\PythonBindings.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Random.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Species.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Substrate.cpp" />
-    <ClCompile Include="..\thirdparty\MultiNEAT\src\Utils.cpp" />
     <ClCompile Include="BallCave.cpp" />
     <ClCompile Include="DeathCave.cpp" />
     <ClCompile Include="InputOverrideCave.cpp" />

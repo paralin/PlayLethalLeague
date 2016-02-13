@@ -3,11 +3,8 @@
 
 #include "stdafx.h"
 #include "Game.h"
-#include "LLNeural.h"
-#include <detours.h>
 #include <io.h>
 #include <Fcntl.h>
-#include "AllCaves.h"
 
 #define USE_NEURAL
 
@@ -66,9 +63,6 @@ DWORD WINAPI RealInjectedMain(LPVOID lpParam)
 // BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	if (DetourIsHelperProcess())
-		return TRUE;
-
 	switch(ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
