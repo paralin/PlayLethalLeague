@@ -4,6 +4,7 @@
 #include "../thirdparty/MultiNEAT/src/Genome.h"
 #include "../thirdparty/MultiNEAT/src/Population.h"
 #include "Utils.h"
+#include <mutex>
 
 class Game;
 class LLNeural
@@ -20,13 +21,16 @@ private:
 
 	std::shared_ptr<NEAT::Genome> genome;
 	std::shared_ptr<NEAT::Population> pop;
+	std::shared_ptr<NEAT::Substrate> substrate;
+
+	void initSubstrate();
+
 	bool wasPlaying;
 	bool ballIsBunted;
 
 	int testN;
 	int individualFitness;
 
-	int currentSpecies;
 	int currentIndividual;
 
 	int lastHitCount;
@@ -43,7 +47,7 @@ private:
 
 	const char* populationPath = "population.dat";
 
-	std::shared_ptr<NEAT::NeuralNetwork> currentNet;
+	std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>> currentNet;
 
 	std::vector<double> inputs;
 
@@ -55,6 +59,17 @@ private:
 	DWORD timeNextUpdate;
 	bool playedOneFrame;
 	double maxAccuracyLastRound;
+	DWORD resetLivesUntil;
+
+	std::mutex logMutex;
+	std::mutex queueAccessMutex;
+	std::queue<std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>>> individualQueue;
+	std::queue<std::pair<NEAT::Genome*, std::shared_ptr<NEAT::NeuralNetwork>>> readyQueue;
+
+	std::vector<std::thread> workQueueThreads;
+
+	void workQueueThread();
+	void queueIndividuals();
 
 public:
 	void newMatchStarted();

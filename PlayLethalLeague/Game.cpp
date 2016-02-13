@@ -348,9 +348,6 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 
 void Game::sendTaunt() const
 {
-	gameData->forcedInputs[1] = 0xFF;
-	Sleep(50);
-	gameData->forcedInputs[1] = 0x00;
 }
 
 void Game::setInputsEnabled(bool b) const
@@ -371,7 +368,7 @@ void Game::setPlayerLives(int playerN, int lives) const
 	assert(playerN < 4);
 	auto addr = gameData->player_states[playerN];
 	if (!addr) return;
-	gameData->player_states[0]->lives = lives;
+	addr->lives = lives;
 }
 
 void Game::resetPlayerHitCounters(int playerN) const
