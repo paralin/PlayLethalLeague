@@ -5,6 +5,7 @@
 #include "Game.h"
 #include <io.h>
 #include <Fcntl.h>
+#include <PlayLLPython.h>
 
 #define USE_NEURAL
 
@@ -78,8 +79,8 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 Game* injectedGameInstance;
 int PlayLethalLeagueMain()
 {
-	LOG("Press enter to continue.");
-	// getchar();
+	LOG("Initializing python interpreter...");
+	Py_Initialize();
 
 	auto g = injectedGameInstance = new Game();
 
