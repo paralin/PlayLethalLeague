@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stdafx.h"
 #include <windows.h>
 #include <vector>
 #include <memory>
@@ -9,6 +10,7 @@
 #include "PatternScan.h"
 #include "LLNeural.h"
 #include "Utils.h"
+#include "PythonEngine.h"
 
 class CodeCave;
 #define APP_ID 261180
@@ -71,7 +73,13 @@ class CodeCave;
 class Game
 {
 public:
-	Game();
+	Game()
+	{
+		LOG("WARN: game default constructor used, probably from python.");
+		LOG("Constructing Game from Python is not supported.");
+	}
+
+	Game(std::string scriptsPath);
 	~Game();
 
 	bool locateExecutable();
@@ -118,5 +126,5 @@ public:
 	// Local copy
 	GameStorage* gameData;
 
-	std::shared_ptr<LLNeural> neural;
+	std::shared_ptr<PythonEngine> python;
 };

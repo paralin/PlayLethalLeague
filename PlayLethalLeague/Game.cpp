@@ -18,16 +18,17 @@ void (__stdcall* ptr_to_callHookedFrameTick)(Game* g) = callHookedFrameTick;
 #define REGISTER_PATTSCAN(CLASS) patternScans.push_back(std::make_shared<CLASS>());
 
 #define ZERO_STRUCT(stru) ZeroMemory(&stru, sizeof(stru));
-Game::Game() : 
+Game::Game(std::string scriptsRoot) : 
 	gameHandle(GetCurrentProcess()), 
 	processId(0) ,
 	wasInGame(false),
 	playedOneFrame(false)
 {
-	gameData = static_cast<GameStorage*>(VirtualAlloc(NULL, sizeof(GameStorage), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	gameData = static_cast<GameStorage*>(VirtualAlloc(nullptr, sizeof(GameStorage), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	memset(gameData, 0, sizeof(GameStorage));
 	gameData->frameHookAddress = ptr_to_callHookedFrameTick;
-	neural = std::make_shared<LLNeural>(this);
+
+	python = std::make_shared<PythonEngine>(this, scriptsRoot);
 
 	printedHookSuccessful = false;
 
@@ -70,7 +71,7 @@ void Game::hookedFrameTick()
 	{
 		LOG("=== Entered a new Match ===");
 		if (playedOneFrame)
-			neural->newMatchStarted();
+			python->newMatchStarted();
 		playedOneFrame = false;
 	}
 	if (!isInGame && wasInGame)
@@ -81,7 +82,7 @@ void Game::hookedFrameTick()
 		return;
 	playedOneFrame = true;
 
-	neural->playOneFrame();
+	python->playOneFrame();
 }
 
 

@@ -6,6 +6,7 @@
 #include <io.h>
 #include <Fcntl.h>
 #include <PlayLLPython.h>
+#include <Shlwapi.h>
 
 #define USE_NEURAL
 
@@ -62,11 +63,13 @@ DWORD WINAPI RealInjectedMain(LPVOID lpParam)
 }
 
 // BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
+HINSTANCE injectedModuleHandle;
 BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	switch(ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+		injectedModuleHandle = hModule;
 		// DisableThreadLibraryCalls(hModule);
 		DWORD dwThreadId;
 		HANDLE hThread = CreateThread(
@@ -82,7 +85,32 @@ int PlayLethalLeagueMain()
 	LOG("Initializing python interpreter...");
 	Py_Initialize();
 
-	auto g = injectedGameInstance = new Game();
+	std::string rootPath;
+	std::string scriptsPath;
+	{
+		char pathToModule[MAX_PATH];
+		size_t pathLength = GetModuleFileName(injectedModuleHandle, pathToModule, MAX_PATH);
+		if (pathLength == 0)
+		{
+			LOG("Unable to get path to current module!");
+			return 0;
+		}
+
+		LOG("Path to module: " << pathToModule);
+		PathRemoveFileSpec(pathToModule);
+		rootPath = std::string(pathToModule, pathLength);
+		scriptsPath = rootPath + std::string("/scripts/");
+		LOG("Scripts path: " << scriptsPath.c_str());
+	}
+
+	auto g = injectedGameInstance = new Game(scriptsPath);
+
+	if (!g->python->loadPythonCode())
+	{
+		LOG("Unable to load python code.");
+		LOG("Bailing out now.");
+		return 0;
+	}
 
 	LOG("Initializing offset code caves...");
 	if (!g->performCodeCaves())

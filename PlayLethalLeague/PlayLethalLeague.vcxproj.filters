@@ -63,6 +63,9 @@
     <ClInclude Include="PlayLLPython.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PythonEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -178,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="DeathCave.cpp">
       <Filter>Source Files\caves</Filter>
+    </ClCompile>
+    <ClCompile Include="PythonEngine.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
