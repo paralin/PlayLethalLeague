@@ -8,7 +8,6 @@
 #include <map>
 #include <chrono>
 #include "PatternScan.h"
-#include "LLNeural.h"
 #include "Utils.h"
 #include "PythonEngine.h"
 
@@ -73,14 +72,14 @@ class CodeCave;
 class Game
 {
 public:
-	Game()
+	_declspec(dllexport) Game()
 	{
 		LOG("WARN: game default constructor used, probably from python.");
 		LOG("Constructing Game from Python is not supported.");
 	}
 
-	Game(std::string scriptsPath);
-	~Game();
+	_declspec(dllexport) Game(std::string scriptsPath);
+	_declspec(dllexport) ~Game();
 
 	bool locateExecutable();
 

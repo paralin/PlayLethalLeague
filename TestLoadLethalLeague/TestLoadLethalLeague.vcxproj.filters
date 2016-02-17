@@ -13,11 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\caves">
-      <UniqueIdentifier>{6bfe234d-189a-4d83-9c91-63845c6747f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\asmjit">
-      <UniqueIdentifier>{0aa59b4b-25f3-49fe-a477-da42c76d4cd3}</UniqueIdentifier>
+      <UniqueIdentifier>{3a5d9df7-5486-4c0e-a9eb-ed5651e1a598}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,84 +27,12 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CodeCave.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AllCaves.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GameStructs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PatternScan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\detours\detver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PatternScanner.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayLLPython.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PythonEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BallCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="GameRulesCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="ResetCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="DevCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="StageCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerSpawnCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="WindowFocusCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="InputOverrideCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="DllMain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PatternScanner.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputUpdateCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="DeathCave.cpp">
-      <Filter>Source Files\caves</Filter>
-    </ClCompile>
-    <ClCompile Include="PythonBindings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PythonEngine.cpp">
+    <ClCompile Include="TestLoadLethalLeague.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\base\assembler.cpp">
@@ -179,8 +104,5 @@
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86scheduler.cpp">
       <Filter>Source Files\asmjit</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ILMerge.props" />
   </ItemGroup>
 </Project>

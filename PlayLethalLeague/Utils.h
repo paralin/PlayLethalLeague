@@ -1,4 +1,5 @@
 #pragma once
+#include <windows.h>
 #include <chrono>
 
 struct TickCountClock
@@ -14,6 +15,9 @@ struct TickCountClock
 		return time_point(duration(GetTickCount()));
 	}
 };
+
+
+_declspec(dllexport) int testInjectedPlayLL();
 
 #define CLOCK_U TickCountClock
 #define TIME_POINT std::chrono::time_point<TickCountClock>

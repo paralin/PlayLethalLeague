@@ -1,13 +1,16 @@
 #pragma once
 
+#include <boost/python.hpp>
+
 class Game;
 class PythonEngine
 {
 public:
-	PythonEngine(Game* game, std::string scriptsRoot);
-	~PythonEngine();
+	_declspec(dllexport) PythonEngine(Game* game, std::string scriptsRoot);
+	_declspec(dllexport) ~PythonEngine();
 
-	bool loadPythonCode();
+	_declspec(dllexport) static void initializePython();
+	_declspec(dllexport) bool loadPythonCode();
 
 	// callbacks
 	void newMatchStarted();
@@ -15,5 +18,8 @@ public:
 
 	std::string scriptsRoot;
 	Game* game;
+
+	boost::python::object global;
+	boost::python::object interfaceInstance;
 };
 
