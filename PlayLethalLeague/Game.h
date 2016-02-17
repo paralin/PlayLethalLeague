@@ -143,4 +143,6 @@ public:
 	GameStorage* gameData;
 
 	std::shared_ptr<PythonEngine> python;
+
+	bool reloadingPythonCode;
 };

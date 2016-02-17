@@ -144,6 +144,13 @@ int PlayLethalLeagueMain()
 	g->clearCaves();
 	LOG("Done performing all code caves...");
 
+	while (g && g->python)
+	{
+		getchar();
+		LOG("Attempting to reload python code...");
+		g->python->reloadPythonCode();
+	}
+
     return 0;
 }
 

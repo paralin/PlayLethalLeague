@@ -21,7 +21,8 @@ void (__stdcall* ptr_to_callHookedFrameTick)(Game* g) = callHookedFrameTick;
 Game::Game(std::string scriptsRoot) : 
 	gameHandle(GetCurrentProcess()), 
 	processId(0) ,
-	wasInGame(false)
+	wasInGame(false),
+	reloadingPythonCode(false)
 {
 	gameData = static_cast<GameStorage*>(VirtualAlloc(nullptr, sizeof(GameStorage), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	memset(gameData, 0, sizeof(GameStorage));
@@ -88,6 +89,11 @@ void Game::hookedFrameTick()
 	updateInputs();
 
 	bool isInGame = gameData->ball_base && gameData->ball_state && gameData->ball_coord && gameData->stage_base;
+
+	// Kinda freeze the game until the python reload is done
+	while (isInGame && reloadingPythonCode)
+		Sleep(100);
+
 	if (isInGame != wasInGame && isInGame)
 	{
 		LOG("=== Entered a new Match ===");

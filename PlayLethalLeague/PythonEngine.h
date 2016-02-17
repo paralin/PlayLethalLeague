@@ -9,6 +9,7 @@ public:
 	_declspec(dllexport) PythonEngine(Game* game, std::string scriptsRoot);
 	_declspec(dllexport) ~PythonEngine();
 
+	_declspec(dllexport) void reloadPythonCode();
 	_declspec(dllexport) static void initializePython();
 	_declspec(dllexport) bool loadPythonCode();
 
