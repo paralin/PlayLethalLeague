@@ -8,6 +8,9 @@ class LethalLeagueOutput:
     def write(self, txt):
         ll.log(txt)
 
+    def flush(self):
+        pass
+
 import sys
 import os.path
 sys.stdout = sys.stderr = LethalLeagueOutput()
@@ -28,33 +31,86 @@ import random
 def to_range(val, maxval):
     return max(min(2.0 * ((val - 0.5 * maxval) / maxval), 1.0), -1.0)
 
+class Experience:
+    def __init__(self, state, action, reward, new_state):
+        self.state = state
+        self.action = action
+        self.reward = reward
+        self.new_state = new_state
+
 class ReinforcementLearner:
-    def __init__(self, state_size, action_size, learn_rate=0.03):
+    def __init__(self, batch_size, state_size, action_size, learn_rate=0.03, discount_factor=0.98):
         self.state_size = state_size
         self.action_size = action_size
+        self.batch_size = batch_size
+
+        self.experiences = []
+
+        self.discount_factor = discount_factor
 
         # Build the model
         self.model = Sequential()
-        '''
+        
         self.model.add(Dense(input_dim=state_size, output_dim=50))
         self.model.add(Dense(output_dim=50, activation="tanh"))
         self.model.add(Dense(output_dim=action_size))
-        '''
 
-        self.model.add(GRU(action_size, return_sequences=False, batch_input_shape=(1, 1, state_size), stateful=True))
-        self.model.add(Dense(action_size))
+        #self.model.add(GRU(action_size, return_sequences=False, batch_input_shape=(batch_size, 1, state_size), stateful=True))
+        #self.model.add(Dense(action_size))
         
         self.model.compile(loss="mse", optimizer=RMSprop(lr=learn_rate))
         self.load("weights.dat")
 
     def predict_q(self, state):
-        return self.model.predict(state.reshape(1, 1, self.state_size)).reshape(self.action_size)
+        '''
+        Predict the Q values for a single state
+        '''
+        
+        # Add zeros to fill for batch size
+        state_batch = np.zeros((self.batch_size, self.state_size))
+        state_batch[0] = state
+
+        return self.model.predict(state_batch)[0]
     
-    def learn(self, state, action_qs):
-        self.model.fit(state.reshape(1, 1, self.state_size), action_qs.reshape(1, self.action_size), nb_epoch=1, verbose=0)
+    def add_experience(self, state, action, reward, new_state):
+        self.experiences.append(Experience(state, action, reward, new_state))
+        log(str(len(self.experiences)) + " experiences")
+
+    def experience_replay(self):
+        '''
+        Perform a single experience replay learning step
+        '''
+
+        # Wait until we have enough experiences
+        if len(self.experiences) < self.batch_size:
+            return
+
+        # Get random experiences
+        experiences = []
+        for i in range(self.batch_size):
+            experiences.append(self.experiences[random.randrange(0, len(self.experiences))])
+
+        # Put all experiences data into numpy arrays
+        states = np.array([ex.state for ex in experiences]).reshape(self.batch_size, self.state_size)
+        rewards = np.array([ex.reward for ex in experiences])
+        new_states = np.array([ex.new_state for ex in experiences]).reshape(self.batch_size, self.state_size)
+
+        # First predict the Q values for the old state, then predict
+        # the Qs of the new state and set the actual Q of the chosen
+        # action for each batch
+        actual_qs = self.model.predict(states)
+
+        predicted_new_qs = self.model.predict(new_states)
+        
+        for i in range(self.batch_size):
+            chosen_action = experiences[i].action
+            actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i]
+        
+        self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
 
     def reset_states(self):
-        self.model.reset_states()
+        pass
+        #self.model.reset_states()
 
     def load(self, path):
         if os.path.exists(path):
@@ -88,9 +144,13 @@ class LethalInterface:
                         action = horizontal + vertical + execution + jump
                         self.actions.append(action)
 
+        self.batch_size = 32
         self.state_size = 12
         self.action_size = len(self.actions)
-        self.learner = ReinforcementLearner(self.state_size, self.action_size)
+        self.learn_rate = 0.03
+        self.discount_factor = 0.98
+
+        self.learner = ReinforcementLearner(self.batch_size, self.state_size, self.action_size, self.learn_rate, self.discount_factor)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
 
     def recordSwingState(self):
@@ -119,7 +179,6 @@ class LethalInterface:
         self.stageYSize = stage.y_size * coord_offset
         self.stageDiagonal = np.sqrt(self.stageXSize**2 + self.stageYSize**2)
 
-        self.distance_to_ball = None
         self.base_lives = game_data.player(0).state.lives
         self.was_playing = False
         
@@ -127,8 +186,6 @@ class LethalInterface:
         self.wasSwinging = False
         self.last_animation_state_countdown = 0
         self.last_update_time = 0
-
-        self.discount_factor = 0.98
 
     def playOneFrame(self):
         if not self.new_match_called_at_least_once:
@@ -187,39 +244,39 @@ class LethalInterface:
     def _do_learning(self, forceReward=None, terminal=False):
         state = self._get_state()
 
-        # Predict the Q values for all actions in the current state
-        # and get the action with the highest Q value
-        predicted_q = self.learner.predict_q(state)
-        best_action = np.argmax(predicted_q)
-
-        # Random action chance
-        if random.randrange(0, 100) < 10:
-            log("Doing something random.")
-            best_action = random.randrange(0, self.action_size)
-            
-        best_action_q = predicted_q[best_action]
-        # Train the model on the temporal difference error
-        # (PredictedQ + Reward) - NewMaxQ
+        # Get the reward and add s, a, r, s' as an experience
         if self.previous_action != None:
             reward = forceReward if forceReward != None else self._get_reward()
-            # Actual Q = Current max Q + reward
-            new_q = self.discount_factor * best_action_q + reward if not terminal else reward
 
-            self.previous_qs[self.previous_action] = new_q
-
-            self.learner.learn(self.previous_state, self.previous_qs)
-            self.previous_action = None
+            # Add an experience to the learner
+            self.learner.add_experience(self.previous_state, self.previous_action, reward, state)
             
             # Reset the networks memory
             if terminal:
                 self.learner.reset_states()
 
-        self._apply_action(best_action)
+        # Choose an action to perform this step
+
+        chosen_action = None
+
+        # Predict the Q values for all actions in the current state
+        # and get the action with the highest Q value.
+        # Small random action chance.
+        if random.randrange(0, 100) >= 90:
+            predicted_q = self.learner.predict_q(state)
+            chosen_action = np.argmax(predicted_q)
+        else:
+            log("Doing something random.")
+            chosen_action = random.randrange(0, self.action_size)
         
-        # Save the state, predicted Q-values and chosen action for learning
+        self._apply_action(chosen_action)
+        
+        # Save the state and the action taken
         self.previous_state = state
-        self.previous_qs = predicted_q
-        self.previous_action = best_action
+        self.previous_action = chosen_action
+
+        # Do the actual training
+        self.learner.experience_replay()
 
     def _apply_action(self, action):
         '''
