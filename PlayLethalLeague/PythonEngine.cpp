@@ -3,6 +3,9 @@
 #include "PythonEngine.h"
 #include <boost/python.hpp>
 #include <Shlwapi.h>
+#include <string>
+#include <fstream>
+#include <streambuf>
 
 using namespace boost::python;
 namespace py = boost::python;
@@ -100,6 +103,20 @@ void PythonEngine::reloadPythonCode()
 	game->reloadingPythonCode = false;
 }
 
+std::string loadFileToString(const char* path)
+{
+	std::ifstream t(path);
+	std::string str;
+
+	t.seekg(0, std::ios::end);
+	str.reserve(t.tellg());
+	t.seekg(0, std::ios::beg);
+
+	str.assign((std::istreambuf_iterator<char>(t)),
+		std::istreambuf_iterator<char>());
+	return str;
+}
+
 bool PythonEngine::loadPythonCode()
 {
 	std::string expectedPath = scriptsRoot + "neural.py";
@@ -114,7 +131,9 @@ bool PythonEngine::loadPythonCode()
 		boost::python::object main = boost::python::import("__main__");
 		global = object(main.attr("__dict__"));
 		LOG("Evaluating " << expectedPath << "...");
-		boost::python::exec_file(expectedPath.c_str(), global, global);
+		std::string code = loadFileToString(expectedPath.c_str());
+		boost::python::exec(boost::python::str(code.c_str()), global, global);
+		// boost::python::exec_file(expectedPath.c_str(), global, global);
 		LOG("Executed, extracting data...");
 		boost::python::object lethalinter;
 		if (!global.contains("LethalInterface") || ((lethalinter = global["LethalInterface"]).is_none()))
