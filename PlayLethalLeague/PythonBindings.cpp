@@ -37,6 +37,8 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.def("resetPlayerBuntCounters", &Game::resetPlayerBuntCounters)
 		.def("sendTaunt", &Game::sendTaunt)
 		.def("resetInputs", &Game::resetInputs)
+		.def("respawnPlayer", &Game::respawnPlayer)
+		.def("resetBall", &Game::resetBall)
 		ADD_POINTER(Game, gameData);
 	class_<GameStorage, GameStorage*>("GameStorage", no_init)
 		.def("player", &GameStorage::getSinglePlayer)

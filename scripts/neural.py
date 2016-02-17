@@ -46,6 +46,8 @@ class LethalInterface:
 
 	def __init__(self, game):
 		self.game = game
+		self.previous_action = None
+		
 		# Build all possible combinations
 		# 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
 		self.actions = []
@@ -75,7 +77,7 @@ class LethalInterface:
 		# and get the action with the highest Q value
 		predicted_q = self.learner.predict_q(state)
 		best_action = np.argmax(predicted_q)
-		best_action_q = predicted_q[best_action]
+		best_action_q = predicted_q[0][best_action]
 
 		# Train the model on the temporal difference error
 		# (PredictedQ + Reward) - NewMaxQ

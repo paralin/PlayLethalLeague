@@ -120,6 +120,9 @@ public:
 	void sendTaunt() const;
 	void resetInputs();
 
+	void respawnPlayer(int i) const;
+	void resetBall() const;
+
 	// Hooked function for frame tick!
 	void hookedFrameTick();
 

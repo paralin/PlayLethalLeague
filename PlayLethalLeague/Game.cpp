@@ -53,6 +53,28 @@ Game::Game(std::string scriptsRoot) :
 	// REGISTER_CODECAVE(DeathCave);
 }
 
+void Game::resetBall() const
+{
+	GameStorage* gd = gameData;
+	if (!gd->ball_state)
+		return;
+
+	gd->ball_state->state = 14;
+	gd->ball_state->serveResetCounter = 300000;
+}
+
+void Game::respawnPlayer(int i) const
+{
+	GameStorage* gd = gameData;
+	if (!gd->player_states[i])
+		return;
+
+	gd->player_states[i]->special_meter = 0;
+	gd->player_states[i]->character_state = 3;
+	gd->player_states[i]->respawn_timer = 200000;
+}
+
+
 void Game::hookedFrameTick()
 {
 	if (!printedHookSuccessful)
