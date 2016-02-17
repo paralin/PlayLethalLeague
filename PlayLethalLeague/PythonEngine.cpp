@@ -78,11 +78,10 @@ PythonEngine::PythonEngine(Game* game, std::string scriptsRoot)
 void PythonEngine::initializePython()
 {
 	LOG("Adding LethalLeague module...");
-	getchar();
 	PyImport_AppendInittab("LethalLeague", INIT_MODULE);
 	LOG("Initializing python...");
-	getchar();
 	Py_Initialize();
+	LOG("Initialized python!");
 }
 
 PythonEngine::~PythonEngine()

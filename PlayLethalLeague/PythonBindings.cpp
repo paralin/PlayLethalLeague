@@ -13,6 +13,7 @@ void playLLLog(const char* str)
 
 
 #define DEFINE_CONSTANT(X) scope().attr(#X) = X
+#define ADD_POINTER(TYPE, NAME) .add_property(#NAME, make_getter(&TYPE::NAME, return_internal_reference<>()))
 BOOST_PYTHON_MODULE(LethalLeague)
 {
 	using namespace boost::python;
@@ -36,24 +37,25 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.def("resetPlayerBuntCounters", &Game::resetPlayerBuntCounters)
 		.def("sendTaunt", &Game::sendTaunt)
 		.def("resetInputs", &Game::resetInputs)
-		.def_readonly("gameData", &Game::gameData);
-	class_<GameStorage>("GameData", no_init)
-		.add_property("ball_coord", &GameStorage::ball_coord)
-		.add_property("ball_state", &GameStorage::ball_state)
-		.add_property("dev_base", &GameStorage::dev_base)
-		.add_property("stage_base", &GameStorage::stage_base)
-		.add_property("player_bases", &GameStorage::stage_base)
-		.add_property("player_coords", &GameStorage::player_coords)
-		.add_property("player_states", &GameStorage::player_states)
-		.add_property("forcedInputs", &GameStorage::forcedInputs);
-	class_<EntityCoords>("EntityCoords")
+		ADD_POINTER(Game, gameData);
+	class_<GameStorage, GameStorage*>("GameStorage", no_init)
+		.def("player", &GameStorage::getSinglePlayer)
+		ADD_POINTER(GameStorage, ball_coord)
+		ADD_POINTER(GameStorage, ball_state)
+		ADD_POINTER(GameStorage, dev_base)
+		ADD_POINTER(GameStorage, stage_base);
+	class_<SinglePlayer>("SinglePlayer", no_init)
+		ADD_POINTER(SinglePlayer, coords)
+		ADD_POINTER(SinglePlayer, state)
+		ADD_POINTER(SinglePlayer, base);
+	class_<EntityCoords, EntityCoords*>("EntityCoords")
 		.add_property("xcoord", &EntityCoords::xcoord)
 		.add_property("ycoord", &EntityCoords::ycoord);
-	class_<DevRegion>("DevRegion")
+	class_<DevRegion, DevRegion*>("DevRegion")
 		.add_property("hitboxes", &DevRegion::hitboxes)
 		.add_property("frameAdvance", &DevRegion::frameAdvance)
 		.add_property("windowActive", &DevRegion::windowActive);
-	class_<BallState>("BallState")
+	class_<BallState, BallState*>("BallState")
 		.add_property("xspeed", &BallState::xspeed)
 		.add_property("yspeed", &BallState::yspeed)
 		.add_property("hitstun", &BallState::hitstun)
@@ -69,7 +71,7 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.add_property("hitCount", &BallState::hitCount)
 		.add_property("serveResetCounter", &BallState::serveResetCounter)
 		.add_property("serveLowerCounter", &BallState::serveLowerCounter);
-	class_<EntityBase>("EntityBase")
+	class_<EntityBase, EntityBase*>("EntityBase")
 		.add_property("fall_speed", &EntityBase::fall_speed)
 		.add_property("graphics_offset_x", &EntityBase::graphics_offset_x)
 		.add_property("graphics_offset_y", &EntityBase::graphics_offset_y)
@@ -98,7 +100,7 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.add_property("ground_down_angle", &EntityBase::ground_down_angle)
 		.add_property("air_down_angle", &EntityBase::air_down_angle)
 		.add_property("smash_angle", &EntityBase::smash_angle);
-	class_<PlayerState>("PlayerState")
+	class_<PlayerState, PlayerState*>("PlayerState")
 		.add_property("facing_direction", &PlayerState::facing_direction)
 		.add_property("horizontal_speed", &PlayerState::horizontal_speed)
 		.add_property("vertical_speed", &PlayerState::vertical_speed)
@@ -119,7 +121,7 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.add_property("total_hit_counter", &PlayerState::total_hit_counter)
 		.add_property("bunt_counter", &PlayerState::bunt_counter)
 		.add_property("hitbox_hit_ball", &PlayerState::hitbox_hit_ball);
-	class_<Stage>("Stage")
+	class_<Stage, Stage*>("Stage")
 		.add_property("x_origin", &Stage::x_origin)
 		.add_property("y_origin", &Stage::y_origin)
 		.add_property("x_size", &Stage::x_size)

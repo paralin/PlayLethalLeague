@@ -28,19 +28,27 @@ static BOOL WINAPI InjectedConsoleCtrlHandler(DWORD dwctrl)
 
 int oldStdin;
 int oldStdout;
+int oldStderr;
 
 #define ENABLE_REDIRECT_STDINOUT
+#define OPEN_MODE _O_TEXT
 void InitInjectedConsole()
 {
 	AllocConsole();
+	SetConsoleTitle("PlayLethalLeague");
 	SetConsoleCtrlHandler(InjectedConsoleCtrlHandler, TRUE);
+	SetConsoleOutputCP(CP_UTF8);  // also this is needed when you want to use UTF8
+
 #ifdef ENABLE_REDIRECT_STDINOUT
-	const int in = _open_osfhandle(INT_PTR(GetStdHandle(STD_INPUT_HANDLE)), _O_TEXT);
-	const int out = _open_osfhandle(INT_PTR(GetStdHandle(STD_OUTPUT_HANDLE)), _O_TEXT);
+	const int in = _open_osfhandle(INT_PTR(GetStdHandle(STD_INPUT_HANDLE)), OPEN_MODE);
+	const int out = _open_osfhandle(INT_PTR(GetStdHandle(STD_OUTPUT_HANDLE)), OPEN_MODE);
+	const int err = _open_osfhandle(INT_PTR(GetStdHandle(STD_ERROR_HANDLE)), OPEN_MODE);
 	oldStdin = in;
 	oldStdout = out;
+	oldStderr = err;
 	*stdin = *_fdopen(in, "r");
 	*stdout = *_fdopen(out, "w");
+	*stderr = *_fdopen(err, "w");
 
 	// Redirect the CRT standard input, output, and error handles to the console
 	freopen("CONIN$", "r", stdin);
@@ -63,8 +71,6 @@ void InitInjectedConsole()
 
 DWORD WINAPI RealInjectedMain(LPVOID lpParam)
 {
-	InitInjectedConsole();
-	LOG("Allocated console!");
 	PlayLethalLeagueMain();
 	return 0;
 }
@@ -92,10 +98,11 @@ BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 Game* injectedGameInstance;
 int PlayLethalLeagueMain()
 {
+	InitInjectedConsole();
 	LOG("Initializing python interpreter...");
-	getchar();
 	PythonEngine::initializePython();
-	getchar();
+
+	LOG("Python initialization done.");
 
 	std::string rootPath;
 	std::string scriptsPath;
@@ -117,11 +124,9 @@ int PlayLethalLeagueMain()
 		LOG("Scripts path: " << scriptsPath.c_str());
 	}
 
-	getchar();
 	auto g = injectedGameInstance = new Game(scriptsPath);
 	LOG("Instantiated game...");
 
-	getchar();
 	LOG("Loading python code...");
 	if (!g->python->loadPythonCode())
 	{

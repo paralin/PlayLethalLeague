@@ -1,14 +1,22 @@
+try:
+	import LethalLeague as ll
+except:
+	print("Could not import LethalLeague, importing dummy")
+	from dummy import DummyLethalLeague as ll
+	
+class LethalLeagueOutput:
+	def write(self, txt):
+		ll.log(txt)
+
+import sys
+sys.stdout = sys.stderr = LethalLeagueOutput()
+		
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.optimizers import RMSprop
 import numpy as np
 from itertools import permutations
 from copy import copy
-try:
-	import LethalLeague as ll
-except:
-	print("Could not import LethalLeague, importing dummy")
-	from dummy import DummyLethalLeague as ll
 
 class ReinforcementLearner:
 	def __init__(self, state_size, action_size, learn_rate=0.01):
@@ -100,12 +108,14 @@ class LethalInterface:
 			ll.setInputImmediate(hotkey, action_hotkeys[hotkey_id])
 
 	def _get_state(self):
-		game_data = game.gameData
+		game_data = self.game.gameData
+		player_0 = game_data.player(0)
+		player_1 = game_data.player(1)
 
 		return np.array([
 			game_data.ball_coord.xcoord, game_data.ball_coord.ycoord,
-			game_data.player_coords[0].xcoord, game_data.player_coords[0].ycoord,
-			game_data.player_coords[1].xcoord, game_data.player_coords[1].ycoord,
+			player_0.coords.xcoord, player_0.coords.ycoord,
+			player_1.coords.xcoord, player_1.coords.ycoord,
 		]).reshape((1, self.state_size))
 
 	def _get_reward(self):
@@ -115,7 +125,7 @@ class LethalInterface:
 		reward = 0
 
 		# Give a positive reward for hitting the ball
-		hit_count = game.gameData.player_states[0].total_hit_counter
+		hit_count = self.game.gameData.player(0).state.total_hit_counter
 		if hit_count != self.hit_count:
 			reward += hit_count - self.hit_count
 

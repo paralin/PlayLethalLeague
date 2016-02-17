@@ -14,7 +14,13 @@
 class CodeCave;
 #define APP_ID 261180
 
-// Don't dereference these!
+struct SinglePlayer
+{
+	EntityBase* base;
+	EntityCoords* coords;
+	PlayerState* state;
+};
+
 struct GameStorage
 {
 	void* ball_base;
@@ -56,6 +62,15 @@ struct GameStorage
 
 	// Remove lives on deaths
 	char decrementLifeOnDeath;
+
+	SinglePlayer getSinglePlayer(int idx)
+	{
+		SinglePlayer p;
+		p.state = player_states[idx];
+		p.coords = player_coords[idx];
+		p.base = player_bases[idx];
+		return p;
+	}
 };
 
 struct CodeCaveScan
