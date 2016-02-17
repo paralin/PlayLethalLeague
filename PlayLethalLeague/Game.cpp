@@ -412,8 +412,10 @@ void Game::resetPlayerBuntCounters(int playerN) const
 	addr->bunt_counter = 0;
 }
 
-void Game::setInputImmediate(char input, bool set)
+void Game::setInputImmediate(int inputi, bool set)
 {
+	// narrow that right down
+	char input = (char)inputi;
 	char& inputs = gameData->forcedInputs[0];
 	inputTimings.erase(input);
 	if (set)
@@ -422,8 +424,10 @@ void Game::setInputImmediate(char input, bool set)
 		inputs ^= input;
 }
 
-void Game::holdInputUntil(char input, TIME_POINT time)
+void Game::holdInputUntil(int inputi, TIME_POINT time)
 {
+	// narrow that right down
+	char input = (char)inputi;
 	inputTimings[input] = time;
 	gameData->forcedInputs[0] |= input;
 }

@@ -142,7 +142,7 @@ class LethalInterface:
 		action_hotkeys = self.actions[action]
 
 		for hotkey_id, hotkey in enumerate(LethalInterface.hotkeys):
-			ll.setInputImmediate(hotkey, action_hotkeys[hotkey_id])
+			self.game.setInputImmediate(hotkey, action_hotkeys[hotkey_id])
 		
 	def _get_state(self):
 		game_data = self.game.gameData

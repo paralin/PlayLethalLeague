@@ -105,8 +105,8 @@ public:
 
 	void setInputsEnabled(bool b) const;
 
-	void setInputImmediate(char input, bool set);
-	void holdInputUntil(char input, TIME_POINT time);
+	void setInputImmediate(int input, bool set);
+	void holdInputUntil(int input, TIME_POINT time);
 	void clearCaves() { caves.clear(); patternScans.clear(); };
 
 	void updateInputs();
