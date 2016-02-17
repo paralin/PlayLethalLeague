@@ -18,7 +18,7 @@ import numpy as np
 from itertools import permutations
 from copy import copy
 
-def _to_input_range(val, maxval):
+def to_range(val, maxval):
 	return max(min(2.0 * ((val - 0.5 * maxval) / maxval), 1.0), -1.0)
 
 class ReinforcementLearner:
@@ -150,8 +150,8 @@ class LethalInterface:
 		player_1 = game_data.player(1)
 
 		return np.array([
-			to_input_range(game_data.ball_coord.xcoord - self.stageX, self.stageXSize), to_input_range(game_data.ball_coord.ycoord - self.stageY, self.stageYSize),
-			to_input_range(player_0.coords.xcoord - self.stageX, self.stageXSize), to_input_range(player_0.coords.ycoord - self.stageY, self.stageYSize),
+			to_range(game_data.ball_coord.xcoord - self.stageX, self.stageXSize), to_range(game_data.ball_coord.ycoord - self.stageY, self.stageYSize),
+			to_range(player_0.coords.xcoord - self.stageX, self.stageXSize), to_range(player_0.coords.ycoord - self.stageY, self.stageYSize),
 			# insert player1 here
 		]).reshape((1, self.state_size))
 

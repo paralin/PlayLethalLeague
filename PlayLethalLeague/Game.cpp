@@ -87,8 +87,8 @@ void Game::hookedFrameTick()
 	checkResetOffsets();
 	updateInputs();
 
-	bool isInGame = gameData->ball_base && gameData->ball_state && gameData->ball_coord;
-	if (isInGame != wasInGame)
+	bool isInGame = gameData->ball_base && gameData->ball_state && gameData->ball_coord && gameData->stage_base;
+	if (isInGame != wasInGame && isInGame)
 	{
 		LOG("=== Entered a new Match ===");
 		python->newMatchStarted();
