@@ -53,6 +53,9 @@ class ReinforcementLearner:
     def learn(self, state, action_qs):
         self.model.fit(state.reshape(1, 1, self.state_size), action_qs.reshape(1, self.action_size), nb_epoch=1, verbose=0)
 
+    def reset_states(self):
+        self.model.reset_states()
+
     def load(self, path):
         if os.path.exists(path):
             log("Loading from " + path)
@@ -206,6 +209,10 @@ class LethalInterface:
 
             self.learner.learn(self.previous_state, self.previous_qs)
             self.previous_action = None
+            
+            # Reset the networks memory
+            if terminal:
+                self.learner.reset_states()
 
         self._apply_action(best_action)
         
