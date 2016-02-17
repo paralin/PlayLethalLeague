@@ -138,7 +138,6 @@ public:
 
 	bool printedHookSuccessful;
 	bool wasInGame;
-	bool playedOneFrame;
 
 	// Local copy
 	GameStorage* gameData;

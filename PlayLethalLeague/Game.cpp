@@ -21,8 +21,7 @@ void (__stdcall* ptr_to_callHookedFrameTick)(Game* g) = callHookedFrameTick;
 Game::Game(std::string scriptsRoot) : 
 	gameHandle(GetCurrentProcess()), 
 	processId(0) ,
-	wasInGame(false),
-	playedOneFrame(false)
+	wasInGame(false)
 {
 	gameData = static_cast<GameStorage*>(VirtualAlloc(nullptr, sizeof(GameStorage), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	memset(gameData, 0, sizeof(GameStorage));
@@ -92,9 +91,7 @@ void Game::hookedFrameTick()
 	if (isInGame != wasInGame)
 	{
 		LOG("=== Entered a new Match ===");
-		if (playedOneFrame)
-			python->newMatchStarted();
-		playedOneFrame = false;
+		python->newMatchStarted();
 	}
 	if (!isInGame && wasInGame)
 		resetInputs();
@@ -102,7 +99,6 @@ void Game::hookedFrameTick()
 
 	if (!isInGame)
 		return;
-	playedOneFrame = true;
 
 	python->playOneFrame();
 }
