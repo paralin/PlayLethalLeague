@@ -63,7 +63,7 @@ class LethalInterface:
 						action = horizontal + vertical + execution + jump
 						self.actions.append(action)
 
-		self.state_size = 6
+		self.state_size = 4
 		self.action_size = len(self.actions)
 		self.learner = ReinforcementLearner(self.state_size, self.action_size)
 		ll.log("Initialized ReinforcementLearner with state size "
