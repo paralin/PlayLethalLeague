@@ -131,8 +131,7 @@ int PlayLethalLeagueMain()
 	if (!g->python->loadPythonCode())
 	{
 		LOG("Unable to load python code.");
-		LOG("Bailing out now.");
-		return 0;
+		LOG("The bot will have no brain!");
 	}
 
 	LOG("Initializing offset code caves...");

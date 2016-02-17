@@ -92,11 +92,6 @@ void PythonEngine::reloadPythonCode()
 {
 	if (!game || !game->gameData)
 		return;
-	if (game->gameData->stage_base && game->gameData->player_states[0])
-	{
-		LOG("We're probably in a match right now, refusing to reload python code.");
-		return;
-	}
 
 	game->reloadingPythonCode = true;
 	try {

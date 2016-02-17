@@ -8,7 +8,9 @@ int getTickCountAsInt()
 
 void playLLLog(const char* str)
 {
-	LOG(str);
+	// python adds newline automatically
+	std::cout << str;
+	// LOG(str);
 }
 
 
@@ -113,6 +115,7 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		.add_property("touching_ceiling", &PlayerState::touching_ceiling)
 		.add_property("character_state", &PlayerState::character_state)
 		.add_property("animation_state", &PlayerState::animation_state)
+		.add_property("change_animation_state_countdown", &PlayerState::change_animation_state_countdown)
 		.add_property("respawn_timer", &PlayerState::respawn_timer)
 		.add_property("special_meter", &PlayerState::special_meter)
 		.add_property("charge", &PlayerState::charge)

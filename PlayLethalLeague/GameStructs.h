@@ -118,7 +118,10 @@ struct PlayerState
 	char pad3[0x112];
 	int character_state;
 	int animation_state;
-	char pad4[0x10];
+	int hitstunCooldown;
+	int change_animation_state_countdown;
+	int maybe_cant_move_cooldown;
+	int maybe_nothing;
 	int respawn_timer;
 	int special_meter;
 	int charge;
