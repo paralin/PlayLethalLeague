@@ -151,7 +151,7 @@ class LethalInterface:
         self.state_size = 13
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
-        self.discount_factor = 0.95
+        self.discount_factor = 0.9
 
         self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
@@ -207,7 +207,7 @@ class LethalInterface:
         player_0 = game_data.player(0)
         player_1 = game_data.player(1)
 
-        playingNow = player_0.state.respawn_timer is 0 and game_data.ball_state.state != 14 and game_data.ball_state.state != 1
+        playingNow = game_data.ball_state.state != 14 and game_data.ball_state.state != 1
                 
         # Decide to spawn the second player or not
         trainHitOnly = False
