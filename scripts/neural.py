@@ -148,7 +148,7 @@ class LethalInterface:
 
         self.state_count = 4
         self.batch_size = 32
-        self.state_size = 12
+        self.state_size = 13
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
         self.discount_factor = 0.95
@@ -343,6 +343,7 @@ class LethalInterface:
         # Ball coordinates (2)
         # Ball speed (1)
         # Ball direction (2)
+        # Ball tag (1)
         
         # special_meter is multiplied by 1638400. divide by 1638400 to get out of 8.
         # check charge animation (1) and changeAnimationStateCountdown (max for charge 15000) which is im assuming 1.5 seconds
@@ -363,7 +364,8 @@ class LethalInterface:
             to_range(game_data.ball_coord.xcoord - self.stageX, self.stageXSize), to_range(game_data.ball_coord.ycoord - self.stageY, self.stageYSize),
             correctedBallSpeed,
             ball_direction[0],
-            ball_direction[1]
+            ball_direction[1],
+            ord(game_data.ball_state.ballTag)
         ])
 
     def _get_reward(self):
