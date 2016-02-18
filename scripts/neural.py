@@ -21,7 +21,7 @@ def log(txt):
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.layers.recurrent import GRU
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 
 import numpy as np
 from itertools import permutations
@@ -32,17 +32,20 @@ def to_range(val, maxval):
     return max(min(2.0 * ((val - 0.5 * maxval) / maxval), 1.0), -1.0)
 
 class Experience:
-    def __init__(self, state, action, reward, new_state):
+    def __init__(self, state, action, reward, new_state, terminal):
         self.state = state
         self.action = action
         self.reward = reward
         self.new_state = new_state
+        self.terminal=terminal
 
 class ReinforcementLearner:
-    def __init__(self, batch_size, state_size, action_size, learn_rate=0.03, discount_factor=0.98):
+    def __init__(self, batch_size, state_size, action_size, learn_rate, discount_factor):
         self.state_size = state_size
         self.action_size = action_size
         self.batch_size = batch_size
+
+        self.max_experiences = 100000
 
         self.experiences = []
 
@@ -51,14 +54,14 @@ class ReinforcementLearner:
         # Build the model
         self.model = Sequential()
         
-        self.model.add(Dense(input_dim=state_size, output_dim=50))
-        self.model.add(Dense(output_dim=50, activation="tanh"))
+        self.model.add(Dense(input_dim=state_size, output_dim=100, activation="relu"))
+        self.model.add(Dense(output_dim=100, activation="relu"))
         self.model.add(Dense(output_dim=action_size))
 
         #self.model.add(GRU(action_size, return_sequences=False, batch_input_shape=(batch_size, 1, state_size), stateful=True))
         #self.model.add(Dense(action_size))
         
-        self.model.compile(loss="mse", optimizer=RMSprop(lr=learn_rate))
+        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
         self.load("weights.dat")
 
     def predict_q(self, state):
@@ -72,9 +75,12 @@ class ReinforcementLearner:
 
         return self.model.predict(state_batch)[0]
     
-    def add_experience(self, state, action, reward, new_state):
-        self.experiences.append(Experience(state, action, reward, new_state))
-        log(str(len(self.experiences)) + " experiences")
+    def add_experience(self, state, action, reward, new_state, terminal):
+        # Keep only a "few" experiences, remove the oldest one
+        if len(self.experiences) >= self.max_experiences:
+            self.experiences.pop(0)
+
+        self.experiences.append(Experience(state, action, reward, new_state, terminal))
 
     def experience_replay(self):
         '''
@@ -104,13 +110,9 @@ class ReinforcementLearner:
         
         for i in range(self.batch_size):
             chosen_action = experiences[i].action
-            actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i]
+            actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
         
         self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
-
-    def reset_states(self):
-        pass
-        #self.model.reset_states()
 
     def load(self, path):
         if os.path.exists(path):
@@ -144,13 +146,14 @@ class LethalInterface:
                         action = horizontal + vertical + execution + jump
                         self.actions.append(action)
 
+        self.state_count = 4
         self.batch_size = 32
         self.state_size = 12
         self.action_size = len(self.actions)
-        self.learn_rate = 0.03
-        self.discount_factor = 0.98
+        self.learn_rate = 0.001
+        self.discount_factor = 0.95
 
-        self.learner = ReinforcementLearner(self.batch_size, self.state_size, self.action_size, self.learn_rate, self.discount_factor)
+        self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
 
     def recordSwingState(self):
@@ -160,7 +163,7 @@ class LethalInterface:
         self.wasSwinging = player_0.state.character_state is 1
         if self.wasSwinging:
             self.hitsBeforeSwing = player_0.state.total_hit_counter
-            
+    
     def newMatchStarted(self):
         log("newMatchStarted called")
         self.new_match_called_at_least_once = True
@@ -187,12 +190,14 @@ class LethalInterface:
         self.last_animation_state_countdown = 0
         self.last_update_time = 0
 
+        self._reset_previous_states()
+
     def playOneFrame(self):
         if not self.new_match_called_at_least_once:
             return
         nowTicks = ll.get_tick_count()
         
-        # Limit update to once every 10ms
+        # Limit update to once every 50ms
         if self.last_update_time + 50 > nowTicks:
             return
         self.last_update_time = nowTicks
@@ -240,20 +245,42 @@ class LethalInterface:
         if player_0.state.character_state is 1:
             self.last_animation_state_countdown = player_0.state.change_animation_state_countdown
 
-    
+    def _reset_previous_states(self):
+        '''
+        Zeros all previous states
+        '''
+        self.previous_states = [np.zeros(self.state_size) for i in range(self.state_count)]
+
+    def _add_previous_state(self, state):
+        '''
+        Adds a new state to the previous states and removes the oldest
+        '''
+        self.previous_states.pop(0)
+        self.previous_states.append(state)
+
+    def _get_previous_states(self):
+        '''
+        Returns all previous states as one vector
+        '''
+        return np.array(self.previous_states).flatten()
+
     def _do_learning(self, forceReward=None, terminal=False):
         state = self._get_state()
+        previous_previous_states = self._get_previous_states()
+        self._add_previous_state(state)
+        previous_states = self._get_previous_states()
 
         # Get the reward and add s, a, r, s' as an experience
         if self.previous_action != None:
             reward = forceReward if forceReward != None else self._get_reward()
 
             # Add an experience to the learner
-            self.learner.add_experience(self.previous_state, self.previous_action, reward, state)
+            if reward != 0 or random.uniform(0, 1) > 0.9:
+                self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
             
-            # Reset the networks memory
+            # Reset all previous states
             if terminal:
-                self.learner.reset_states()
+                self._reset_previous_states()
 
         # Choose an action to perform this step
 
@@ -262,8 +289,11 @@ class LethalInterface:
         # Predict the Q values for all actions in the current state
         # and get the action with the highest Q value.
         # Small random action chance.
-        if random.randrange(0, 100) >= 90:
-            predicted_q = self.learner.predict_q(state)
+        if random.uniform(0, 1) >= 0.1:
+            predicted_q = self.learner.predict_q(previous_states)
+            print("Avg Q:", np.mean(predicted_q))
+            print("Highest Q Action:", np.argmax(predicted_q))
+            print("Highest Q:", np.max(predicted_q))
             chosen_action = np.argmax(predicted_q)
         else:
             log("Doing something random.")
