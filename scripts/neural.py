@@ -152,6 +152,9 @@ class LethalInterface:
                         action = horizontal + vertical + execution + jump
                         self.actions.append(action)
 
+        self.learning = True
+        self.random_action_chance = 0.1
+
         self.state_count = 4
         self.batch_size = 32
         self.state_size = 15
@@ -314,7 +317,7 @@ class LethalInterface:
         # Predict the Q values for all actions in the current state
         # and get the action with the highest Q value.
         # Small random action chance.
-        if random.uniform(0, 1) >= 0.1:
+        if random.uniform(0, 1) >= self.random_action_chance:
             predicted_q = self.learner.predict_q(previous_states)
             '''
             print("Avg Q:", np.mean(predicted_q))
@@ -333,7 +336,8 @@ class LethalInterface:
         self.previous_action = chosen_action
 
         # Do the actual training
-        self.learner.experience_replay()
+        if self.learning:
+            self.learner.experience_replay()
 
     def _apply_action(self, action):
         '''
