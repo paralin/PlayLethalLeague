@@ -1,0 +1,81 @@
+200 ingame minutes vs Lvl7 Candyman
+
+Random: 0% (max 4%)
+
+================================
+# Player 0 coords (2)
+# Player 0 velocity (2)
+# Player 0 charge timer (1) 
+# Player 1 coords (2)
+# Player 1 velocity (2)
+# Ball coordinates (2)
+# Ball speed (1)
+# Ball direction (2)
+# Ball tag (1)
+
++20 win
+-30 loss
++10+charge*10 hit
+-1 miss
+
+100K saved exps
+4 Saved states
+0.9 Discount
+0.001 Learn Rate Adam MSE
+10% Random actions
+10% Keeping 0 reward exps
+50ms Update interval
+---------------
+
+ELU 2 Layer-200 5% (max 8%)
+Linear 5% (max 5%)
+ELU 3 Layer-200 3% (max 7%)
+ELU 1 Layer-400 3% (max 4%)
+ELU 4 Layer-100 5% (max 10%)
+ELU 4 Layer-100 BatchNorm in center 0% (max 5%)
+RELU 4 Layer-100 7% (max 7%)
+TANH 4 Layer-100 2% (max 3%)
+================================
+
+================================
+1000 saved exps
+---------------
+
+ELU 4 Layer-100 5% (max 7%)
+================================
+
+================================
+1 Saved states
+---------------
+
+ELU 4 Layer-100 0% (max 3%)
+================================
+
+================================
+10 Saved states
+---------------
+
+ELU 4 Layer-100 2% (max 8%)
+================================
+
+================================
+0.0001 Learn Rate Adam MSE
+---------------
+
+ELU 4 Layer-100 5% (max 9%)
+================================
+
+
+================================
+100ms Update interval
+---------------
+
+ELU 4 Layer-100 0% (max 5%)
+================================
+
+================================
+15ms Update interval
+---------------
+
+ELU 4 Layer-100 5% (max 14%)
+================================

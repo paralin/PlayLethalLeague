@@ -20,7 +20,7 @@ def log(txt):
         
 from keras.models import Sequential
 from keras.layers.core import Dense
-from keras.layers.recurrent import GRU
+from keras.layers.advanced_activations import ELU
 from keras.optimizers import Adam
 
 import numpy as np
@@ -54,8 +54,14 @@ class ReinforcementLearner:
         # Build the model
         self.model = Sequential()
         
-        self.model.add(Dense(input_dim=state_size, output_dim=100, activation="relu"))
-        self.model.add(Dense(output_dim=100, activation="relu"))
+        self.model.add(Dense(input_dim=state_size, output_dim=100))
+        self.model.add(ELU())
+        self.model.add(Dense(output_dim=100))
+        self.model.add(ELU())
+        self.model.add(Dense(output_dim=100))
+        self.model.add(ELU())
+        self.model.add(Dense(output_dim=100))
+        self.model.add(ELU())
         self.model.add(Dense(output_dim=action_size))
 
         #self.model.add(GRU(action_size, return_sequences=False, batch_input_shape=(batch_size, 1, state_size), stateful=True))
@@ -148,10 +154,11 @@ class LethalInterface:
 
         self.state_count = 4
         self.batch_size = 32
-        self.state_size = 13
+        self.state_size = 15
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
         self.discount_factor = 0.9
+        self.update_interval = 15
 
         self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
@@ -190,6 +197,9 @@ class LethalInterface:
         self.last_animation_state_countdown = 0
         self.last_update_time = 0
 
+        self.round_winners = []
+        self.round_winners_size = 100
+
         self._reset_previous_states()
 
     def playOneFrame(self):
@@ -197,8 +207,8 @@ class LethalInterface:
             return
         nowTicks = ll.get_tick_count()
         
-        # Limit update to once every 50ms
-        if self.last_update_time + 50 > nowTicks:
+        # Limit update to once every update_interval ms
+        if self.last_update_time + self.update_interval > nowTicks:
             return
         self.last_update_time = nowTicks
 
@@ -223,12 +233,16 @@ class LethalInterface:
             weDied = player_0.state.lives < player_1.state.lives
             if weDied:
                 log("We died, rewarding -30.")
+                self._add_round_winner(False)
                 self._do_learning(-30, True)
                 self.game.respawnPlayer(0)
             else:
                 log("We got a kill, rewarding 20.")
+                self._add_round_winner(True)
                 self._do_learning(20, True)
                 self.game.respawnPlayer(1)
+
+            print("Win percentage:", self._get_win_percentage())
             
             self.game.resetBall()
             self.learner.save("weights.dat")
@@ -264,6 +278,17 @@ class LethalInterface:
         '''
         return np.array(self.previous_states).flatten()
 
+    def _add_round_winner(self, won):
+        if len(self.round_winners) >= self.round_winners_size:
+            self.round_winners.pop(0)
+        self.round_winners.append(1 if won else 0)
+
+    def _get_win_percentage(self):
+        if len(self.round_winners) == 0:
+            return 0.0
+
+        return sum(self.round_winners) / len(self.round_winners)
+
     def _do_learning(self, forceReward=None, terminal=False):
         state = self._get_state()
         previous_previous_states = self._get_previous_states()
@@ -291,9 +316,11 @@ class LethalInterface:
         # Small random action chance.
         if random.uniform(0, 1) >= 0.1:
             predicted_q = self.learner.predict_q(previous_states)
+            '''
             print("Avg Q:", np.mean(predicted_q))
             print("Highest Q Action:", np.argmax(predicted_q))
             print("Highest Q:", np.max(predicted_q))
+            '''
             chosen_action = np.argmax(predicted_q)
         else:
             log("Doing something random.")
@@ -340,6 +367,7 @@ class LethalInterface:
         # Player 0 velocity (2)
         # Player 0 charge timer (1) 
         # Player 1 coords (2)
+        # Player 1 velocity (2)
         # Ball coordinates (2)
         # Ball speed (1)
         # Ball direction (2)
@@ -361,6 +389,8 @@ class LethalInterface:
         # Player 0 charge timer
             playerChargeTimer,
             to_range(player_1.coords.xcoord - self.stageX, self.stageXSize), to_range(player_1.coords.ycoord - self.stageY, self.stageYSize),
+        # Player 1 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
+            min(max(player_1.state.horizontal_speed / (player_1.base.max_speed / 60.0), -1.0), 1.0), min(max(player_1.state.vertical_speed / (player_1.base.fast_fall_speed / 60.0), -1.0), 1.0),
             to_range(game_data.ball_coord.xcoord - self.stageX, self.stageXSize), to_range(game_data.ball_coord.ycoord - self.stageY, self.stageYSize),
             correctedBallSpeed,
             ball_direction[0],
