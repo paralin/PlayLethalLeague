@@ -171,6 +171,9 @@ class LethalInterface:
                         action = horizontal + vertical + execution + jump
                         self.actions.append(action)
 
+        self.learning = True
+        self.random_action_chance = 0.1
+
         self.state_count = 4
         self.batch_size = 32
         self.state_size = 15
@@ -233,6 +236,9 @@ class LethalInterface:
         self.currently_in_game = False
        
     def learnOneFrame(self):
+        if not self.learning:
+            return
+        
         nowTicks = ll.get_tick_count()
         ''' Secondary thread to learn between the playOneFrame frames. '''
         
@@ -379,7 +385,7 @@ class LethalInterface:
         # Predict the Q values for all actions in the current state
         # and get the action with the highest Q value.
         # Small random action chance.
-        if not self.random_enabled or random.uniform(0, 1) >= 0.1:
+        if not self.random_enabled or random.uniform(0, 1) >= self.random_action_chance:
             predicted_q = self.learner.predict_q(previous_states)
             '''
             print("Avg Q:", np.mean(predicted_q))
@@ -396,9 +402,6 @@ class LethalInterface:
         # Save the state and the action taken
         self.previous_state = state
         self.previous_action = chosen_action
-
-        # Do the actual training
-        # moved to separate thread self.learner.experience_replay()
 
     def _apply_action(self, action):
         '''
