@@ -39,6 +39,218 @@ class Experience:
         self.reward = reward
         self.new_state = new_state
         self.terminal=terminal
+        
+class PlayerState:
+    def __init__(self, idx, game, inter):
+        self.idx = idx
+        self.game = game
+        self.inter = inter
+        self.learner = inter.learner
+        
+        self.hitsBeforeSwing = 0
+        self.wasSwinging = False
+        self.last_animation_state_countdown = 0
+        self.hit_count = 0
+        
+        self.previous_action = None
+        self.previous_states = []
+        
+        self.observe_actions = idx != 0
+        
+        self.round_winners = []
+        self.round_winners_size = 100
+        self._reset_previous_states()
+    
+    def _get_state(self):
+        game_data = self.game.gameData
+        player_0 = game_data.player(self.idx)
+        player_1 = game_data.player(1 - self.idx)
+        
+        ballSpeed = game_data.ball_state.ballSpeed
+        ballState = game_data.ball_state.state
+        
+        correctedBallSpeed = to_range(ballSpeed if ballState is 0 else 0, 1200.0)
+        
+        playerChargeTimer = -1.0
+        if player_0.state.character_state == 1:
+            playerChargeTimer = to_range(player_0.state.change_animation_state_countdown, 15000)
+        
+        # Player 0 coords (2)
+        # Player 0 velocity (2)
+        # Player 0 charge timer (1) 
+        # Player 1 coords (2)
+        # Player 1 velocity (2)
+        # Ball coordinates (2)
+        # Ball speed (1)
+        # Ball direction (2)
+        # Ball tag (1)
+        
+        # special_meter is multiplied by 1638400. divide by 1638400 to get out of 8.
+        # check charge animation (1) and changeAnimationStateCountdown (max for charge 15000) which is im assuming 1.5 seconds
+        # for switch, character state 4 + animation state 43 = switchflipping
+
+        ball_direction = np.array([game_data.ball_state.xspeed, game_data.ball_state.yspeed], dtype=np.float)
+        if np.linalg.norm(ball_direction) != 0:
+            ball_direction /= np.linalg.norm(ball_direction)
+
+        return np.array([
+        # Player 0 coords
+            to_range(player_0.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_0.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
+        # Player 0 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
+            min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
+        # Player 0 charge timer
+            playerChargeTimer,
+            to_range(player_1.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_1.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
+        # Player 1 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
+            min(max(player_1.state.horizontal_speed / (player_1.base.max_speed / 60.0), -1.0), 1.0), min(max(player_1.state.vertical_speed / (player_1.base.fast_fall_speed / 60.0), -1.0), 1.0),
+            to_range(game_data.ball_coord.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(game_data.ball_coord.ycoord - self.inter.stageY, self.inter.stageYSize),
+            correctedBallSpeed,
+            ball_direction[0],
+            ball_direction[1],
+            ord(game_data.ball_state.ballTag)
+        ])
+        
+    def log(self, txt):
+        log("[" + str(self.idx) + "] " + txt)
+        
+    def _get_reward(self):
+        '''
+        Gets the reward between now and the last call to this function
+        '''
+        reward = 0
+        game_data = self.game.gameData
+        player_0 = game_data.player(self.idx)
+
+        # Give a negative reward for missing a swing
+        isSwinging = player_0.state.character_state == 1
+        if self.wasSwinging and not isSwinging:
+            if player_0.state.total_hit_counter == self.hitsBeforeSwing:
+                self.log("Missed a swing, rewarding -1.")
+                reward -= 1
+        self.recordSwingState()
+        
+        # Give a positive reward for hitting the ball
+        hit_count = self.game.gameData.player(0).state.total_hit_counter
+        if hit_count != self.hit_count:
+            # lastCountdown = 1 is better
+            lastCountdown = 1.0 - min(max(self.last_animation_state_countdown / 15000.0, 0.0), 1.0)
+            chargeBonus = lastCountdown * 10
+            if lastCountdown < 0.1:
+                chargeBonus = 0
+            self.log("Hit the ball, rewarding 10 + charge bonus of " + str(chargeBonus))
+            reward += (hit_count - self.hit_count) * 10
+            reward += chargeBonus
+            self.hit_count = hit_count
+            
+        # Give a reward for moving towards the ball
+        player_x = np.float(player_0.coords.xcoord)
+        player_y = np.float(player_0.coords.ycoord)
+        ball_x = np.float(game_data.ball_coord.xcoord)
+        ball_y = np.float(game_data.ball_coord.ycoord)
+
+        if reward != 0:
+            self.log("Reward " + str(reward) + " at time " + str(ll.get_tick_count()))
+
+        return reward
+     
+    def recordSwingState(self):
+        game_data = self.game.gameData
+        player_0 = game_data.player(self.idx)
+        # We are swinging if character state = 0x01 = 1
+        self.wasSwinging = player_0.state.character_state is 1
+        if self.wasSwinging:
+            self.hitsBeforeSwing = player_0.state.total_hit_counter
+    
+    def endOfLife(self):
+        self.wasSwinging = False
+        self.hitsBeforeSwing = self.game.gameData.player(self.idx).state.total_hit_counter
+            
+    def _reset_previous_states(self):
+        '''
+        Zeros all previous states
+        '''
+        self.previous_states = [np.zeros(self.inter.state_size) for i in range(self.inter.state_count)]
+
+    def _add_previous_state(self, state):
+        '''
+        Adds a new state to the previous states and removes the oldest
+        '''
+        self.previous_states.pop(0)
+        self.previous_states.append(state)
+
+    def _get_previous_states(self):
+        '''
+        Returns all previous states as one vector
+        '''
+        return np.array(self.previous_states).flatten()
+
+    def _add_round_winner(self, won):
+        if len(self.round_winners) >= self.round_winners_size:
+            self.round_winners.pop(0)
+        self.round_winners.append(1 if won else 0)
+
+    def _get_win_percentage(self):
+        if len(self.round_winners) == 0:
+            return 0.0
+
+        return sum(self.round_winners) / len(self.round_winners)
+
+    def _do_learning(self, forceReward=None, terminal=False):
+        state = self._get_state()
+        previous_previous_states = self._get_previous_states()
+        self._add_previous_state(state)
+        previous_states = self._get_previous_states()
+
+        # Get the reward and add s, a, r, s' as an experience
+        if self.previous_action != None:
+            reward = forceReward if forceReward != None else self._get_reward()
+
+            # Add an experience to the learner
+            if abs(reward) > 0.5 or random.uniform(0, 1) > 0.9:
+                self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
+            
+            # Reset all previous states
+            if terminal:
+                self._reset_previous_states()
+
+        # Choose an action to perform this step
+        chosen_action = None
+        if self.observe_actions:
+            # just observe what we're currently pressing
+            # not implemented yet (todo)
+            return
+        else:
+            # Predict the Q values for all actions in the current state
+            # and get the action with the highest Q value.
+            # Small random action chance.
+            if not self.inter.random_enabled or random.uniform(0, 1) >= self.inter.random_action_chance:
+                predicted_q = self.learner.predict_q(previous_states)
+                chosen_action = np.argmax(predicted_q)
+            else:
+                chosen_action = random.randrange(0, self.inter.action_size)
+            
+            self._apply_action(chosen_action)
+        
+        # Save the state and the action taken
+        self.previous_state = state
+        self.previous_action = chosen_action
+        
+        player_0 = self.game.gameData.player(self.idx)
+        if player_0.state.character_state is 1:
+            self.last_animation_state_countdown = player_0.state.change_animation_state_countdown
+            
+    def _apply_action(self, action):
+        '''
+        Presses the hotkeys corresponding to the passed action for player
+        '''
+        #if action < 0 or action >= self.action_size:
+        #     print("Invalid action id", action)
+
+        # A boolean for every hotkey index (pressed/released)
+        action_hotkeys = self.inter.actions[action]
+
+        for hotkey_id, hotkey in enumerate(LethalInterface.hotkeys):
+            self.game.setInputImmediate(hotkey, action_hotkeys[hotkey_id])
 
 class ReinforcementLearner:
     def __init__(self, batch_size, state_size, action_size, learn_rate, discount_factor, dimensionality):
@@ -160,6 +372,7 @@ class LethalInterface:
         self.game = game
         self.previous_action = None
         self.new_match_called_at_least_once = False
+        self.player_states = []
         
         # Build all possible combinations
         # 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
@@ -183,7 +396,7 @@ class LethalInterface:
         self.discount_factor = 0.9
         self.update_interval = 50
         self.dimensionality = 200
-        self.random_enabled = False
+        self.random_enabled = True
         self.currently_in_game = False
         # Assume that the time to run 1 batcn is 90% of the update interval to be safe initially
         self.average_batch_time = 0.9 * self.update_interval
@@ -191,28 +404,21 @@ class LethalInterface:
 
         self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
-
-    def recordSwingState(self):
-        game_data = self.game.gameData
-        player_0 = game_data.player(0)
-        # We are swinging if character state = 0x01 = 1
-        self.wasSwinging = player_0.state.character_state is 1
-        if self.wasSwinging:
-            self.hitsBeforeSwing = player_0.state.total_hit_counter
+        #self.newMatchStarted()
     
     def newMatchStarted(self):
         log("newMatchStarted called")
         self.new_match_called_at_least_once = True
         self.currently_in_game = True
-        
-        self.hit_count = 0
-        self.previous_action = None
         self.was_playing = False
+        
+        self.player_states = [PlayerState(i, self.game, self) for i in range(2)]
         
         # calculate the map size
         coord_offset = 50000.0
         game_data = self.game.gameData
         stage = game_data.stage_base
+        
         self.stageX = stage.x_origin * coord_offset
         self.stageXSize = stage.x_size * coord_offset
         self.stageY = stage.y_origin * coord_offset
@@ -222,16 +428,8 @@ class LethalInterface:
         self.base_lives = game_data.player(0).state.lives
         self.was_playing = False
         
-        self.hitsBeforeSwing = game_data.player(0).state.total_hit_counter
-        self.wasSwinging = False
-        self.last_animation_state_countdown = 0
         self.last_update_time = 0
         self.next_update_time = 0
-
-        self.round_winners = []
-        self.round_winners_size = 100
-
-        self._reset_previous_states()
         
     def matchReset(self):
         self.currently_in_game = False
@@ -241,7 +439,6 @@ class LethalInterface:
             return
         
         nowTicks = ll.get_tick_count()
-        ''' Secondary thread to learn between the playOneFrame frames. '''
         
         # Don't do updates if it will take longer than to the next frame
         if self.currently_in_game and self.next_update_time < nowTicks + self.average_batch_time:
@@ -259,27 +456,22 @@ class LethalInterface:
         self.batch_times.append(afterTicks - nowTicks)
         self.average_batch_time = np.mean(self.batch_times)
         
-        if len(self.batch_times) > 10:
+        if len(self.batch_times) > 30:
             if self.average_batch_time > 0.7 * self.update_interval and self.learner.batch_size > 10:
-                self.batch_times = []
+                #self.batch_times = []
                 self.learner.batch_size -= 1
                 log("Lowering batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
-            elif self.average_batch_time < 0.6 * self.update_interval:
-                self.batch_times = []
+            elif self.average_batch_time < 0.6 * self.update_interval and len(self.learner.experiences) > self.learner.batch_size:
+                #self.batch_times = []
                 self.learner.batch_size += 1
                 log("Raising batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
-            else:
-                self.batch_times.pop(0)
+            self.batch_times.pop(0)
 
     def playOneFrame(self):
         nowTicks = ll.get_tick_count()
         if not self.new_match_called_at_least_once:
             return nowTicks + 10
         
-        # Limit update to once every update_interval ms
-        #if self.last_update_time + self.update_interval > nowTicks:
-        #    return
-            
         self.last_update_time = nowTicks
         self.next_update_time = nowTicks + self.update_interval
 
@@ -289,31 +481,22 @@ class LethalInterface:
         player_1 = game_data.player(1)
 
         playingNow = game_data.ball_state.state != 14 and game_data.ball_state.state != 1
-                
-        # Decide to spawn the second player or not
-        trainHitOnly = False
-        #self.game.setPlayerExists(1, not trainHitOnly)
         
-        # Add logic here for resetting player lives / checking life count
-        # Before setting trainHitOnly to false.
-        # see https://github.com/paralin/PlayLethalLeague/blob/master/PlayLethalLeague/LLNeural.cpp#L158'
         if not playingNow and self.was_playing:
             log("== end of life ==")
-            self.wasSwinging = False
-            self.hitsBeforeSwing = player_0.state.total_hit_counter
-            weDied = player_0.state.lives < player_1.state.lives
-            if weDied:
-                log("We died, rewarding -30.")
-                self._add_round_winner(False)
-                self._do_learning(-30, True)
-                self.game.respawnPlayer(0)
-            else:
-                log("We got a kill, rewarding 20.")
-                self._add_round_winner(True)
-                self._do_learning(20, True)
-                self.game.respawnPlayer(1)
+            self.player_states[0].endOfLife()
+            self.player_states[1].endOfLife()
 
-            print("Win percentage:", self._get_win_percentage())
+            weDied = player_0.state.lives < player_1.state.lives
+            winnerIdx = 1 if weDied else 0
+            self.player_states[winnerIdx]._do_learning(30, True)
+            self.player_states[winnerIdx]._add_round_winner(True)
+            self.player_states[1 - winnerIdx]._do_learning(-30, True)
+            self.player_states[1 - winnerIdx]._add_round_winner(False)
+            
+            self.game.respawnPlayer(1 - winnerIdx)
+            
+            print("Win percentage:", self.player_states[0]._get_win_percentage())
             
             self.game.resetBall()
             self.learner.save("weights.dat")
@@ -326,190 +509,7 @@ class LethalInterface:
             return self.next_update_time
             
         # Calculate things like total swing count, etc
-        self._do_learning()
-        if player_0.state.character_state is 1:
-            self.last_animation_state_countdown = player_0.state.change_animation_state_countdown
+        self.player_states[0]._do_learning()
+        self.player_states[1]._do_learning()
+        
         return self.next_update_time
-
-    def _reset_previous_states(self):
-        '''
-        Zeros all previous states
-        '''
-        self.previous_states = [np.zeros(self.state_size) for i in range(self.state_count)]
-
-    def _add_previous_state(self, state):
-        '''
-        Adds a new state to the previous states and removes the oldest
-        '''
-        self.previous_states.pop(0)
-        self.previous_states.append(state)
-
-    def _get_previous_states(self):
-        '''
-        Returns all previous states as one vector
-        '''
-        return np.array(self.previous_states).flatten()
-
-    def _add_round_winner(self, won):
-        if len(self.round_winners) >= self.round_winners_size:
-            self.round_winners.pop(0)
-        self.round_winners.append(1 if won else 0)
-
-    def _get_win_percentage(self):
-        if len(self.round_winners) == 0:
-            return 0.0
-
-        return sum(self.round_winners) / len(self.round_winners)
-
-    def _do_learning(self, forceReward=None, terminal=False):
-        state = self._get_state()
-        previous_previous_states = self._get_previous_states()
-        self._add_previous_state(state)
-        previous_states = self._get_previous_states()
-
-        # Get the reward and add s, a, r, s' as an experience
-        if self.previous_action != None:
-            reward = forceReward if forceReward != None else self._get_reward()
-
-            # Add an experience to the learner
-            if abs(reward) < 0.5 or random.uniform(0, 1) > 0.9:
-                self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
-            
-            # Reset all previous states
-            if terminal:
-                self._reset_previous_states()
-
-        # Choose an action to perform this step
-
-        chosen_action = None
-
-        # Predict the Q values for all actions in the current state
-        # and get the action with the highest Q value.
-        # Small random action chance.
-        if not self.random_enabled or random.uniform(0, 1) >= self.random_action_chance:
-            predicted_q = self.learner.predict_q(previous_states)
-            '''
-            print("Avg Q:", np.mean(predicted_q))
-            print("Highest Q Action:", np.argmax(predicted_q))
-            print("Highest Q:", np.max(predicted_q))
-            '''
-            chosen_action = np.argmax(predicted_q)
-        else:
-            log("Doing something random.")
-            chosen_action = random.randrange(0, self.action_size)
-        
-        self._apply_action(chosen_action)
-        
-        # Save the state and the action taken
-        self.previous_state = state
-        self.previous_action = chosen_action
-
-    def _apply_action(self, action):
-        '''
-        Presses the hotkeys corresponding to the passed action
-        '''
-        #if action < 0 or action >= self.action_size:
-        #     print("Invalid action id", action)
-
-        # A boolean for every hotkey index (pressed/released)
-        action_hotkeys = self.actions[action]
-        #print("Applying action", " ".join(["D" if a else "U" for a in action_hotkeys]))
-
-        for hotkey_id, hotkey in enumerate(LethalInterface.hotkeys):
-            self.game.setInputImmediate(hotkey, action_hotkeys[hotkey_id])
-        
-    def _get_state(self):
-        game_data = self.game.gameData
-        player_0 = game_data.player(0)
-        player_1 = game_data.player(1)
-        
-        ballSpeed = game_data.ball_state.ballSpeed
-        ballState = game_data.ball_state.state
-        
-        correctedBallSpeed = to_range(ballSpeed if ballState is 0 else 0, 1200.0)
-        
-        playerChargeTimer = -1.0
-        if player_0.state.character_state == 1:
-            playerChargeTimer = to_range(player_0.state.change_animation_state_countdown, 15000)
-        
-        # Player 0 coords (2)
-        # Player 0 velocity (2)
-        # Player 0 charge timer (1) 
-        # Player 1 coords (2)
-        # Player 1 velocity (2)
-        # Ball coordinates (2)
-        # Ball speed (1)
-        # Ball direction (2)
-        # Ball tag (1)
-        
-        # special_meter is multiplied by 1638400. divide by 1638400 to get out of 8.
-        # check charge animation (1) and changeAnimationStateCountdown (max for charge 15000) which is im assuming 1.5 seconds
-        # for switch, character state 4 + animation state 43 = switchflipping
-
-        ball_direction = np.array([game_data.ball_state.xspeed, game_data.ball_state.yspeed], dtype=np.float)
-        if np.linalg.norm(ball_direction) != 0:
-            ball_direction /= np.linalg.norm(ball_direction)
-
-        return np.array([
-        # Player 0 coords
-            to_range(player_0.coords.xcoord - self.stageX, self.stageXSize), to_range(player_0.coords.ycoord - self.stageY, self.stageYSize),
-        # Player 0 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
-            min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
-        # Player 0 charge timer
-            playerChargeTimer,
-            to_range(player_1.coords.xcoord - self.stageX, self.stageXSize), to_range(player_1.coords.ycoord - self.stageY, self.stageYSize),
-        # Player 1 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
-            min(max(player_1.state.horizontal_speed / (player_1.base.max_speed / 60.0), -1.0), 1.0), min(max(player_1.state.vertical_speed / (player_1.base.fast_fall_speed / 60.0), -1.0), 1.0),
-            to_range(game_data.ball_coord.xcoord - self.stageX, self.stageXSize), to_range(game_data.ball_coord.ycoord - self.stageY, self.stageYSize),
-            correctedBallSpeed,
-            ball_direction[0],
-            ball_direction[1],
-            ord(game_data.ball_state.ballTag)
-        ])
-
-    def _get_reward(self):
-        '''
-        Gets the reward between now and the last call to this function
-        '''
-        reward = 0
-        game_data = self.game.gameData
-        player_0 = game_data.player(0)
-
-        # Give a negative reward for missing a swing
-        isSwinging = player_0.state.character_state == 1
-        if self.wasSwinging and not isSwinging:
-            if player_0.state.total_hit_counter == self.hitsBeforeSwing:
-                log("Missed a swing, rewarding -1.")
-                reward -= 1
-        self.recordSwingState()
-        
-        # Give a positive reward for hitting the ball
-        hit_count = self.game.gameData.player(0).state.total_hit_counter
-        if hit_count != self.hit_count:
-            # lastCountdown = 1 is better
-            lastCountdown = 1.0 - min(max(self.last_animation_state_countdown / 15000.0, 0.0), 1.0)
-            chargeBonus = lastCountdown * 10
-            if lastCountdown < 0.1:
-                chargeBonus = 0
-            log("We hit the ball, rewarding 10 + charge bonus of " + str(chargeBonus))
-            reward += (hit_count - self.hit_count) * 10
-            reward += chargeBonus
-            self.hit_count = hit_count
-            
-        # Give a reward for moving towards the ball
-        player_x = np.float(player_0.coords.xcoord)
-        player_y = np.float(player_0.coords.ycoord)
-        ball_x = np.float(game_data.ball_coord.xcoord)
-        ball_y = np.float(game_data.ball_coord.ycoord)
-
-        '''
-        distance_to_ball = np.sqrt((player_x - ball_x)**2 + (player_y - ball_y)**2) / self.stageDiagonal
-        if self.distance_to_ball != None:
-            reward += self.distance_to_ball - distance_to_ball
-        self.distance_to_ball = distance_to_ball
-        '''
-
-        if reward != 0:
-            log("Reward " + str(reward) + " at time " + str(ll.get_tick_count()))
-
-        return reward
