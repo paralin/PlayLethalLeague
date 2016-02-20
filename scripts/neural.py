@@ -92,9 +92,10 @@ class ReinforcementLearner:
             self.experiences.pop(0)
 
         self.experiences.append(Experience(state, action, reward, new_state, terminal))
-        if now > self.last_experience_save + 20000:
+        self.last_experience_save += 1
+        if self.last_experience_save >= 4000:
             self.saveExperiences("experiences.dat")
-            self.last_experience_save = now
+            self.last_experience_save = 0
 
     def experience_replay(self):
         '''
