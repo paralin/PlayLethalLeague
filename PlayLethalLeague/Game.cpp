@@ -109,6 +109,48 @@ void Game::hookedFrameTick()
 	if (!isInGame)
 		return;
 
+	// process sticky inputs
+	for (auto px = 0; px < 4; px++)
+	{
+		// reference variable (important)
+		char inputSticky = gameData->inputsSavedSticky[px];
+		// 2 bytes for this one
+		const char inputNow = gameData->inputsSaved[px * 2];
+		bool wasAttacking = (inputSticky & CONTROL_ATTACK) || (inputNow & CONTROL_ATTACK);
+		bool wasBunting = (inputSticky & CONTROL_BUNT) || (inputNow & CONTROL_BUNT);
+
+		// HACK: AI players do NOT record the attack or bunt keys.
+		// Temporary fix: assume we're playing with p1 as an AI, and record attack key if he is in attack anim
+		if (px == 1)
+		{
+			char animState = gameData->player_states[px]->animation_state;
+			if (!wasAttacking)
+			{
+				switch (animState)
+				{
+				case 1:
+				case 4:
+					wasAttacking = true;
+					break;
+				}
+			}
+			if (!wasBunting)
+			{
+				if (animState >= 16 && animState <= 19)
+				{
+					wasBunting = true;
+				}
+			}
+		}
+
+		inputSticky = inputNow;
+		if (wasAttacking)
+			inputSticky |= CONTROL_ATTACK;
+		if (wasBunting)
+			inputSticky |= CONTROL_BUNT;
+		gameData->inputsSavedSticky[px] = inputSticky;
+	}
+
 	python->playOneFrame();
 }
 
@@ -139,6 +181,7 @@ void Game::checkResetOffsets() const
 		ZEROOFF(player_states);
 		ZEROOFF(player_spawn);
 		ZEROOFF(inputsSaved);
+		ZEROOFF(inputsSavedSticky);
 		ZEROOFF(isOnline);
 	}
 }

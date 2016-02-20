@@ -57,8 +57,11 @@ struct GameStorage
 	// Set the indexes to 1
 	char inputsForcePlayers[4];
 
-	// saved inputs
+	// saved inputs by asm
 	char inputsSaved[8];
+
+	// saved inputs pre python hooks, sticky attack until observe
+	char inputsSavedSticky[4];
 
 	// Address of frame hook function
 	void* frameHookAddress;
@@ -81,7 +84,7 @@ struct GameStorage
 	boost::python::list getSinglePlayerInputs(int idx)
 	{
 		boost::python::list inps;
-		char inp = inputsSaved[idx * 2];
+		const char inp = inputsSavedSticky[idx];
 		// 8 bits
 		inps.append(inp & CONTROL_UP);
 		inps.append(inp & CONTROL_DOWN);
@@ -90,6 +93,9 @@ struct GameStorage
 		inps.append(inp & CONTROL_ATTACK);
 		inps.append(inp & CONTROL_BUNT);
 		inps.append(inp & CONTROL_JUMP);
+
+		// every get we clear it so that it can be updated again later
+		inputsSavedSticky[idx] = 0;
 		return inps;
 	}
 };

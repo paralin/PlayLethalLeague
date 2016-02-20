@@ -144,7 +144,7 @@ class PlayerState:
             reward += chargeBonus
             self.hit_count = hit_count
 
-        if reward != 0:
+        if abs(reward) > 0.5:
             self.log("Reward " + str(reward) + " at time " + str(ll.get_tick_count()))
 
         return reward
@@ -213,8 +213,9 @@ class PlayerState:
         chosen_action = None
         if self.observe_actions:
             # just observe what we're currently pressing
-            # not implemented yet (todo)
-            curr_action = [bool(elem) for elem in self.game.gameData.player_inputs(self.idx)]
+            # player_inputs can be called ONCE PER PLAYONCE CALL PER PLAYER THIS IS IMPORTANT
+            inps = self.game.gameData.player_inputs(self.idx)
+            curr_action = [bool(elem) for elem in inps]
             # It's possible they're pressing some "exclusive" buttons simultanously, check for this
             # up/down exclusive
             if curr_action[0]:
@@ -227,7 +228,10 @@ class PlayerState:
             if actidx is None:
                 self.log("Unable to find matching action for " + str(curr_action))
             #else:
-            #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
+                #if curr_action[4]:
+                #    self.log("Observed attack action.")
+                #if actidx != 53:
+                #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
             chosen_action = actidx
         else:
             # Predict the Q values for all actions in the current state
@@ -269,7 +273,7 @@ class ReinforcementLearner:
         self.batch_size = batch_size
 
         self.max_experiences = 100000
-        self.last_experience_save = 0
+        self.deaths_since_save = 0
         
         self.experiences = []
 
@@ -314,10 +318,6 @@ class ReinforcementLearner:
             self.experiences.pop(0)
 
         self.experiences.append(Experience(state, action, reward, new_state, terminal))
-        self.last_experience_save += 1
-        if self.last_experience_save >= 4000:
-            self.saveExperiences("experiences.dat")
-            self.last_experience_save = 0
 
     def experience_replay(self):
         '''
@@ -330,7 +330,7 @@ class ReinforcementLearner:
 
         # Get random experiences
         experiences = []
-        for i in range(self.batch_size):
+        for i in range(self.batch_size - 1):
             experiences.append(self.experiences[random.randrange(0, len(self.experiences) - 1)])
         # Also append the latest experience
         experiences.append(self.experiences[len(self.experiences) - 1])
@@ -364,6 +364,12 @@ class ReinforcementLearner:
             with open(path, "rb") as f:
                 self.experiences = pickle.load(f)
     
+    def maybeSaveExperiences(self):
+        self.deaths_since_save += 1
+        if self.deaths_since_save > 10:
+            self.deaths_since_save = 0
+            self.saveExperiences("experiences.dat")
+            
     def saveExperiences(self, path):
         log("Dumping experiences to " + path)
         with open(path, "wb") as f:
@@ -411,7 +417,7 @@ class LethalInterface:
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
         self.discount_factor = 0.9
-        self.update_interval = 50
+        self.update_interval = 25
         self.dimensionality = 200
         self.random_enabled = False
         self.currently_in_game = False
@@ -503,6 +509,9 @@ class LethalInterface:
             log("== end of life ==")
             self.player_states[0].endOfLife()
             self.player_states[1].endOfLife()
+            
+            # maybe save experiences
+            self.learner.maybeSaveExperiences()
 
             weDied = player_0.state.lives < player_1.state.lives
             winnerIdx = 1 if weDied else 0
