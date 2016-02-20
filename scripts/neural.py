@@ -85,6 +85,14 @@ class PlayerState:
         # Ball direction (2)
         # Ball tag (1)
         
+        ballTag = ord(game_data.ball_state.ballTag)
+        if ballTag != 0:
+            ballTag = 1
+
+        # Invert the tag if we're on the other side, this way both are the same in the learning
+        if self.idx != 0:
+            ballTag = 1 - ballTag
+        
         # special_meter is multiplied by 1638400. divide by 1638400 to get out of 8.
         # check charge animation (1) and changeAnimationStateCountdown (max for charge 15000) which is im assuming 1.5 seconds
         # for switch, character state 4 + animation state 43 = switchflipping
@@ -107,7 +115,7 @@ class PlayerState:
             correctedBallSpeed,
             ball_direction[0],
             ball_direction[1],
-            ord(game_data.ball_state.ballTag)
+            ballTag
         ])
         
     def log(self, txt):
@@ -202,7 +210,10 @@ class PlayerState:
             reward = forceReward if forceReward != None else self._get_reward()
 
             # Add an experience to the learner
-            if abs(reward) > 0.5 or random.uniform(0, 1) > 0.9:
+            # Heavily favor experiences where the ball is tagged to the enemy
+            stateBefore = self.previous_states[len(self.previous_states) - 2]
+            enemyTagged = stateBefore[9] == 1
+            if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
                 self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
             
             # Reset all previous states
@@ -366,7 +377,7 @@ class ReinforcementLearner:
     
     def maybeSaveExperiences(self):
         self.deaths_since_save += 1
-        if self.deaths_since_save > 10:
+        if self.deaths_since_save > 50:
             self.deaths_since_save = 0
             self.saveExperiences("experiences.dat")
             
@@ -417,7 +428,7 @@ class LethalInterface:
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
         self.discount_factor = 0.9
-        self.update_interval = 25
+        self.update_interval = 30
         self.dimensionality = 200
         self.random_enabled = False
         self.currently_in_game = False
@@ -482,11 +493,11 @@ class LethalInterface:
         self.average_batch_time = np.mean(self.batch_times)
         
         if len(self.batch_times) > 30:
-            if self.average_batch_time > 0.7 * self.update_interval and self.learner.batch_size > 10:
+            if self.average_batch_time > 0.9 * self.update_interval and self.learner.batch_size > 10:
                 #self.batch_times = []
                 self.learner.batch_size -= 1
                 log("Lowering batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
-            elif self.average_batch_time < 0.6 * self.update_interval and len(self.learner.experiences) > self.learner.batch_size:
+            elif self.average_batch_time < 0.8 * self.update_interval and len(self.learner.experiences) > self.learner.batch_size:
                 #self.batch_times = []
                 self.learner.batch_size += 1
                 log("Raising batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
