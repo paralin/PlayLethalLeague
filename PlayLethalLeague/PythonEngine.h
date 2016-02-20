@@ -20,8 +20,8 @@ public:
 	// callbacks
 	void newMatchStarted();
 	void playOneFrame();
-	void learnOneFrame();
 	void matchReset();
+  void learnOneFrame();
 
 	void learnOneFrameThread();
 
@@ -37,6 +37,6 @@ public:
 	DWORD nextFrameUpdateTime = 0;
 
 private:
-	void tryCallFunction(const char* fcn);
+  boost::python::object tryCallFunction(const char* fcn, bool doLockPy=true);
 };
 

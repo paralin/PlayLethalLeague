@@ -3,7 +3,7 @@ try:
 except:
     print("Could not import LethalLeague, importing dummy")
     from dummy import DummyLethalLeague as ll
-    
+
 class LethalLeagueOutput:
     def write(self, txt):
         ll.log(txt)
@@ -17,7 +17,7 @@ sys.stdout = sys.stderr = LethalLeagueOutput()
 
 def log(txt):
     print("[Python] " + txt)
-        
+
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.layers.advanced_activations import ELU
@@ -39,52 +39,53 @@ class Experience:
         self.reward = reward
         self.new_state = new_state
         self.terminal=terminal
-        
+
 class PlayerState:
     def __init__(self, idx, game, inter):
         self.idx = idx
         self.game = game
         self.inter = inter
         self.learner = inter.learner
-        
+
         self.hitsBeforeSwing = 0
         self.wasSwinging = False
         self.last_animation_state_countdown = 0
         self.hit_count = 0
-        
+
         self.previous_action = None
         self.previous_states = []
-        
+
         self.observe_actions = idx != 0
-        
+
         self.round_winners = []
         self.round_winners_size = 100
         self._reset_previous_states()
-    
+
     def _get_state(self):
         game_data = self.game.gameData
         player_0 = game_data.player(self.idx)
         player_1 = game_data.player(1 - self.idx)
-        
+
         ballSpeed = game_data.ball_state.ballSpeed
         ballState = game_data.ball_state.state
-        
+
         correctedBallSpeed = to_range(ballSpeed if ballState is 0 else 0, 1200.0)
-        
+
         playerChargeTimer = -1.0
         if player_0.state.character_state == 1:
             playerChargeTimer = to_range(player_0.state.change_animation_state_countdown, 15000)
-        
+
         # Player 0 coords (2)
         # Player 0 velocity (2)
-        # Player 0 charge timer (1) 
+        # Player 0 charge timer (1)
+        # player 0 facing direction (1)
         # Player 1 coords (2)
         # Player 1 velocity (2)
         # Ball coordinates (2)
         # Ball speed (1)
         # Ball direction (2)
         # Ball tag (1)
-        
+
         ballTag = ord(game_data.ball_state.ballTag)
         if ballTag != 0:
             ballTag = 1
@@ -92,7 +93,7 @@ class PlayerState:
         # Invert the tag if we're on the other side, this way both are the same in the learning
         if self.idx != 0:
             ballTag = 1 - ballTag
-        
+
         # special_meter is multiplied by 1638400. divide by 1638400 to get out of 8.
         # check charge animation (1) and changeAnimationStateCountdown (max for charge 15000) which is im assuming 1.5 seconds
         # for switch, character state 4 + animation state 43 = switchflipping
@@ -108,6 +109,7 @@ class PlayerState:
             min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
         # Player 0 charge timer
             playerChargeTimer,
+            player_0.state.facing_direction,
             to_range(player_1.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_1.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
         # Player 1 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
             min(max(player_1.state.horizontal_speed / (player_1.base.max_speed / 60.0), -1.0), 1.0), min(max(player_1.state.vertical_speed / (player_1.base.fast_fall_speed / 60.0), -1.0), 1.0),
@@ -117,10 +119,10 @@ class PlayerState:
             ball_direction[1],
             ballTag
         ])
-        
+
     def log(self, txt):
         log("[" + str(self.idx) + "] " + txt)
-        
+
     def _get_reward(self):
         '''
         Gets the reward between now and the last call to this function
@@ -138,7 +140,7 @@ class PlayerState:
                     self.log("Missed a swing, rewarding -1.")
                     reward -= 1
         self.recordSwingState()
-        
+
         # Give a positive reward for hitting the ball
         hit_count = player_0.state.total_hit_counter
         if hit_count != self.hit_count:
@@ -156,7 +158,7 @@ class PlayerState:
             self.log("Reward " + str(reward) + " at time " + str(ll.get_tick_count()))
 
         return reward
-     
+
     def recordSwingState(self):
         game_data = self.game.gameData
         player_0 = game_data.player(self.idx)
@@ -164,11 +166,11 @@ class PlayerState:
         self.wasSwinging = player_0.state.character_state is 1
         if self.wasSwinging:
             self.hitsBeforeSwing = player_0.state.total_hit_counter
-    
+
     def endOfLife(self):
         self.wasSwinging = False
         self.hitsBeforeSwing = self.game.gameData.player(self.idx).state.total_hit_counter
-            
+
     def _reset_previous_states(self):
         '''
         Zeros all previous states
@@ -199,7 +201,7 @@ class PlayerState:
 
         return sum(self.round_winners) / len(self.round_winners)
 
-    def _do_learning(self, forceReward=None, terminal=False):
+    def _do_playing(self, forceReward=None, terminal=False):
         state = self._get_state()
         previous_previous_states = self._get_previous_states()
         self._add_previous_state(state)
@@ -209,13 +211,13 @@ class PlayerState:
         if self.previous_action != None:
             reward = forceReward if forceReward != None else self._get_reward()
 
-            # Add an experience to the learner
+            # Add an experience to the player
             # Heavily favor experiences where the ball is tagged to the enemy
             stateBefore = self.previous_states[len(self.previous_states) - 2]
             enemyTagged = stateBefore[9] == 1
             if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
-                self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
-            
+                self.player.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
+
             # Reset all previous states
             if terminal:
                 self._reset_previous_states()
@@ -249,21 +251,21 @@ class PlayerState:
             # and get the action with the highest Q value.
             # Small random action chance.
             if not self.inter.random_enabled or random.uniform(0, 1) >= self.inter.random_action_chance:
-                predicted_q = self.learner.predict_q(previous_states)
+                predicted_q = self.player.predict_q(previous_states)
                 chosen_action = np.argmax(predicted_q)
             else:
                 chosen_action = random.randrange(0, self.inter.action_size)
-            
+
             self._apply_action(chosen_action)
-        
+
         # Save the state and the action taken
         self.previous_state = state
         self.previous_action = chosen_action
-        
+
         player_0 = self.game.gameData.player(self.idx)
         if player_0.state.character_state is 1:
             self.last_animation_state_countdown = player_0.state.change_animation_state_countdown
-            
+
     def _apply_action(self, action):
         '''
         Presses the hotkeys corresponding to the passed action for player
@@ -283,16 +285,14 @@ class ReinforcementLearner:
         self.action_size = action_size
         self.batch_size = batch_size
 
-        self.max_experiences = 100000
-        self.deaths_since_save = 0
-        
         self.experiences = []
+        self.max_experiences = 100000
 
         self.discount_factor = discount_factor
 
         # Build the model
         self.model = Sequential()
-        
+
         self.model.add(Dense(input_dim=state_size, output_dim=dimensionality))
         self.model.add(ELU())
         self.model.add(Dense(output_dim=dimensionality))
@@ -303,27 +303,24 @@ class ReinforcementLearner:
         self.model.add(ELU())
         self.model.add(Dense(output_dim=action_size))
 
-        #self.model.add(GRU(action_size, return_sequences=False, batch_input_shape=(batch_size, 1, state_size), stateful=True))
-        #self.model.add(Dense(action_size))
-        
         self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
-        self.load("weights.dat")
-        self.loadExperiences("experiences.dat")
+
+        # The creator is responsible for calling load weights and load experiences
 
     def predict_q(self, state):
         '''
         Predict the Q values for a single state
         '''
-        
+
         # Add zeros to fill for batch size
         state_batch = np.zeros((self.batch_size, self.state_size))
         state_batch[0] = state
 
         return self.model.predict(state_batch)[0]
-    
+
     def add_experience(self, state, action, reward, new_state, terminal):
         now = ll.get_tick_count()
-        
+
         # Keep only a "few" experiences, remove the oldest one
         if len(self.experiences) >= self.max_experiences:
             self.experiences.pop(0)
@@ -357,11 +354,11 @@ class ReinforcementLearner:
         actual_qs = self.model.predict(states)
 
         predicted_new_qs = self.model.predict(new_states)
-        
+
         for i in range(self.batch_size):
             chosen_action = experiences[i].action
             actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
-        
+
         self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
         return True
 
@@ -369,29 +366,24 @@ class ReinforcementLearner:
         if os.path.exists(path):
             log("Loading weights from " + path)
             self.model.load_weights(path)
+
     def loadExperiences(self, path):
         if os.path.exists(path):
             log("Loading experiences from " + path)
             with open(path, "rb") as f:
                 self.experiences = pickle.load(f)
-    
-    def maybeSaveExperiences(self):
-        self.deaths_since_save += 1
-        if self.deaths_since_save > 50:
-            self.deaths_since_save = 0
-            self.saveExperiences("experiences.dat")
-            
+
     def saveExperiences(self, path):
         log("Dumping experiences to " + path)
         with open(path, "wb") as f:
             pickle.dump(self.experiences, f)
-    
+
     def save(self, path):
         self.model.save_weights(path, True)
 
 class LethalInterface:
     hotkeys = [
-        ll.CONTROL_UP, ll.CONTROL_DOWN, 
+        ll.CONTROL_UP, ll.CONTROL_DOWN,
         ll.CONTROL_LEFT, ll.CONTROL_RIGHT,
         ll.CONTROL_ATTACK, ll.CONTROL_BUNT,
         ll.CONTROL_JUMP,
@@ -402,7 +394,7 @@ class LethalInterface:
         self.previous_action = None
         self.new_match_called_at_least_once = False
         self.player_states = []
-        
+
         # Build all possible combinations
         # 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
         self.actions = []
@@ -422,8 +414,12 @@ class LethalInterface:
         self.learning = True
         self.random_action_chance = 0.1
 
-        self.state_count = 4
+        # Batch size used for learner
         self.batch_size = 32
+        # We want 5 seconds worth of learning each time
+        self.target_batch_time = 5000
+
+        self.state_count = 4
         self.state_size = 15
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
@@ -432,28 +428,37 @@ class LethalInterface:
         self.dimensionality = 200
         self.random_enabled = False
         self.currently_in_game = False
-        self.learned_since_last_action = False
         # Assume that the time to run 1 batcn is 90% of the update interval to be safe initially
         self.average_batch_time = 0.9 * self.update_interval
         self.batch_times = []
 
+        # We want 1 batch size for the player
+        self.player = ReinforcementLearner(1, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
+        log("Initialized ReinforcementLearner player with state size " + str(1) + " and action size " + str(self.action_size))
+
         self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
-        log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
-        #self.newMatchStarted()
-    
+        log("Initialized ReinforcementLearner learner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
+
+        # Load the experiences and weights
+        self.learner.loadExperiences("experiences.dat")
+        self.learner.load("weights.dat")
+
+        # Copy to player
+        self.applyLearning(False)
+
     def newMatchStarted(self):
         log("newMatchStarted called")
         self.new_match_called_at_least_once = True
         self.currently_in_game = True
         self.was_playing = False
-        
+
         self.player_states = [PlayerState(i, self.game, self) for i in range(2)]
-        
+
         # calculate the map size
         coord_offset = 50000.0
         game_data = self.game.gameData
         stage = game_data.stage_base
-        
+
         self.stageX = stage.x_origin * coord_offset
         self.stageXSize = stage.x_size * coord_offset
         self.stageY = stage.y_origin * coord_offset
@@ -462,52 +467,48 @@ class LethalInterface:
 
         self.base_lives = game_data.player(0).state.lives
         self.was_playing = False
-        
+
         self.last_update_time = 0
         self.next_update_time = 0
-        
+
     def matchReset(self):
         self.currently_in_game = False
-       
+
+    # Returning True will result in a applyLearning
     def learnOneFrame(self):
         if not self.learning:
-            return
-        
+            return False
         nowTicks = ll.get_tick_count()
-        
-        # Don't do updates if it will take longer than to the next frame
-        if self.currently_in_game and self.learned_since_last_action: #self.next_update_time < nowTicks + self.average_batch_time:
-            return
-         
-        self.learned_since_last_action = True
+
         # Perform a batch
         if not self.learner.experience_replay():
-            return
-        
+            return False
+
         afterTicks = ll.get_tick_count()
         # Happens sometimes randomly
         if afterTicks - nowTicks < 5:
-            return
-        
+            return False
+
         self.batch_times.append(afterTicks - nowTicks)
         self.average_batch_time = np.mean(self.batch_times)
-        
-        if len(self.batch_times) > 30:
-            if self.average_batch_time > 0.9 * self.update_interval and self.learner.batch_size > 10:
-                #self.batch_times = []
+
+        if len(self.batch_times) > 5:
+            if self.average_batch_time > self.target_batch_time - 100 and self.learner.batch_size > 10:
                 self.learner.batch_size -= 1
                 log("Lowering batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
-            elif self.average_batch_time < 0.8 * self.update_interval and len(self.learner.experiences) > self.learner.batch_size:
-                #self.batch_times = []
+            elif self.average_batch_time < self.target_batch_time + 100 and len(self.learner.experiences) > self.learner.batch_size:
                 self.learner.batch_size += 1
                 log("Raising batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
             self.batch_times.pop(0)
+
+        # Learning happened, we want to apply it
+        return True
 
     def playOneFrame(self):
         nowTicks = ll.get_tick_count()
         if not self.new_match_called_at_least_once:
             return nowTicks + 10
-        
+
         self.last_update_time = nowTicks
         self.next_update_time = nowTicks + self.update_interval
 
@@ -517,39 +518,45 @@ class LethalInterface:
         player_1 = game_data.player(1)
 
         playingNow = game_data.ball_state.state != 14 and game_data.ball_state.state != 1
-        
+
         if not playingNow and self.was_playing:
             log("== end of life ==")
             self.player_states[0].endOfLife()
             self.player_states[1].endOfLife()
-            
-            # maybe save experiences
-            self.learner.maybeSaveExperiences()
 
             weDied = player_0.state.lives < player_1.state.lives
             winnerIdx = 1 if weDied else 0
-            self.player_states[winnerIdx]._do_learning(30, True)
+            self.player_states[winnerIdx]._do_playing(30, True)
             self.player_states[winnerIdx]._add_round_winner(True)
-            self.player_states[1 - winnerIdx]._do_learning(-30, True)
+            self.player_states[1 - winnerIdx]._do_playing(-30, True)
             self.player_states[1 - winnerIdx]._add_round_winner(False)
-            
+
             self.game.respawnPlayer(1 - winnerIdx)
-            
-            print("Win percentage:", self.player_states[0]._get_win_percentage())
-            
             self.game.resetBall()
-            self.learner.save("weights.dat")
-        
+
+            print("Win percentage:", self.player_states[0]._get_win_percentage())
+
         self.was_playing = playingNow
         # for now just bail out if we're not actually in play
         if not playingNow:
             self.game.setPlayerLives(0, self.base_lives)
             self.game.setPlayerLives(1, self.base_lives)
             return self.next_update_time
-            
+
         # Calculate things like total swing count, etc
-        self.player_states[0]._do_learning()
-        self.player_states[1]._do_learning()
-        
-        self.learned_since_last_action = False
+        self.player_states[0]._do_playing()
+        self.player_states[1]._do_playing()
+
         return self.next_update_time
+
+    def applyLearning(self, do_weights_save=True):
+        log("Applying learning from learner to player.")
+
+        # Save weights
+        if do_weights_save:
+            self.learner.save("weights.dat")
+        self.player.load("weights.dat")
+
+        # Transfer experiences
+        self.learner.experiences.extend(self.player.experiences)
+        self.player.experiences = []
