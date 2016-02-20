@@ -23,6 +23,7 @@ from keras.layers.core import Dense
 from keras.layers.advanced_activations import ELU
 from keras.optimizers import Adam
 
+import pickle
 import numpy as np
 from itertools import permutations
 from copy import copy
@@ -40,13 +41,14 @@ class Experience:
         self.terminal=terminal
 
 class ReinforcementLearner:
-    def __init__(self, batch_size, state_size, action_size, learn_rate, discount_factor):
+    def __init__(self, batch_size, state_size, action_size, learn_rate, discount_factor, dimensionality):
         self.state_size = state_size
         self.action_size = action_size
         self.batch_size = batch_size
 
         self.max_experiences = 100000
-
+        self.last_experience_save = 0
+        
         self.experiences = []
 
         self.discount_factor = discount_factor
@@ -54,13 +56,13 @@ class ReinforcementLearner:
         # Build the model
         self.model = Sequential()
         
-        self.model.add(Dense(input_dim=state_size, output_dim=100))
+        self.model.add(Dense(input_dim=state_size, output_dim=dimensionality))
         self.model.add(ELU())
-        self.model.add(Dense(output_dim=100))
+        self.model.add(Dense(output_dim=dimensionality))
         self.model.add(ELU())
-        self.model.add(Dense(output_dim=100))
+        self.model.add(Dense(output_dim=dimensionality))
         self.model.add(ELU())
-        self.model.add(Dense(output_dim=100))
+        self.model.add(Dense(output_dim=dimensionality))
         self.model.add(ELU())
         self.model.add(Dense(output_dim=action_size))
 
@@ -69,6 +71,7 @@ class ReinforcementLearner:
         
         self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
         self.load("weights.dat")
+        self.loadExperiences("experiences.dat")
 
     def predict_q(self, state):
         '''
@@ -82,11 +85,16 @@ class ReinforcementLearner:
         return self.model.predict(state_batch)[0]
     
     def add_experience(self, state, action, reward, new_state, terminal):
+        now = ll.get_tick_count()
+        
         # Keep only a "few" experiences, remove the oldest one
         if len(self.experiences) >= self.max_experiences:
             self.experiences.pop(0)
 
         self.experiences.append(Experience(state, action, reward, new_state, terminal))
+        if now > self.last_experience_save + 20000:
+            self.saveExperiences("experiences.dat")
+            self.last_experience_save = now
 
     def experience_replay(self):
         '''
@@ -95,7 +103,7 @@ class ReinforcementLearner:
 
         # Wait until we have enough experiences
         if len(self.experiences) < self.batch_size:
-            return
+            return False
 
         # Get random experiences
         experiences = []
@@ -119,11 +127,22 @@ class ReinforcementLearner:
             actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
         
         self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
+        return True
 
     def load(self, path):
         if os.path.exists(path):
-            log("Loading from " + path)
+            log("Loading weights from " + path)
             self.model.load_weights(path)
+    def loadExperiences(self, path):
+        if os.path.exists(path):
+            log("Loading experiences from " + path)
+            with open(path, "rb") as f:
+                self.experiences = pickle.load(f)
+    
+    def saveExperiences(self, path):
+        log("Dumping experiences to " + path)
+        with open(path, "wb") as f:
+            pickle.dump(self.experiences, f)
     
     def save(self, path):
         self.model.save_weights(path, True)
@@ -158,9 +177,15 @@ class LethalInterface:
         self.action_size = len(self.actions)
         self.learn_rate = 0.001
         self.discount_factor = 0.9
-        self.update_interval = 15
+        self.update_interval = 50
+        self.dimensionality = 200
+        self.random_enabled = False
+        self.currently_in_game = False
+        # Assume that the time to run 1 batcn is 90% of the update interval to be safe initially
+        self.average_batch_time = 0.9 * self.update_interval
+        self.batch_times = []
 
-        self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor)
+        self.learner = ReinforcementLearner(self.batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
         log("Initialized ReinforcementLearner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
 
     def recordSwingState(self):
@@ -174,6 +199,7 @@ class LethalInterface:
     def newMatchStarted(self):
         log("newMatchStarted called")
         self.new_match_called_at_least_once = True
+        self.currently_in_game = True
         
         self.hit_count = 0
         self.previous_action = None
@@ -196,21 +222,59 @@ class LethalInterface:
         self.wasSwinging = False
         self.last_animation_state_countdown = 0
         self.last_update_time = 0
+        self.next_update_time = 0
 
         self.round_winners = []
         self.round_winners_size = 100
 
         self._reset_previous_states()
+        
+    def matchReset(self):
+        self.currently_in_game = False
+       
+    def learnOneFrame(self):
+        nowTicks = ll.get_tick_count()
+        ''' Secondary thread to learn between the playOneFrame frames. '''
+        
+        # Don't do updates if it will take longer than to the next frame
+        if self.currently_in_game and self.next_update_time < nowTicks + self.average_batch_time:
+            return
+         
+        # Perform a batch
+        if not self.learner.experience_replay():
+            return
+        
+        afterTicks = ll.get_tick_count()
+        # Happens sometimes randomly
+        if afterTicks - nowTicks < 5:
+            return
+        
+        self.batch_times.append(afterTicks - nowTicks)
+        self.average_batch_time = np.mean(self.batch_times)
+        
+        if len(self.batch_times) > 10:
+            if self.average_batch_time > 0.7 * self.update_interval and self.learner.batch_size > 10:
+                self.batch_times = []
+                self.learner.batch_size -= 1
+                log("Lowering batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
+            elif self.average_batch_time < 0.6 * self.update_interval:
+                self.batch_times = []
+                self.learner.batch_size += 1
+                log("Raising batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
+            else:
+                self.batch_times.pop(0)
 
     def playOneFrame(self):
-        if not self.new_match_called_at_least_once:
-            return
         nowTicks = ll.get_tick_count()
+        if not self.new_match_called_at_least_once:
+            return nowTicks + 10
         
         # Limit update to once every update_interval ms
-        if self.last_update_time + self.update_interval > nowTicks:
-            return
+        #if self.last_update_time + self.update_interval > nowTicks:
+        #    return
+            
         self.last_update_time = nowTicks
+        self.next_update_time = nowTicks + self.update_interval
 
         # First check if we are actually in play
         game_data = self.game.gameData
@@ -252,12 +316,13 @@ class LethalInterface:
         if not playingNow:
             self.game.setPlayerLives(0, self.base_lives)
             self.game.setPlayerLives(1, self.base_lives)
-            return
+            return self.next_update_time
             
         # Calculate things like total swing count, etc
         self._do_learning()
         if player_0.state.character_state is 1:
             self.last_animation_state_countdown = player_0.state.change_animation_state_countdown
+        return self.next_update_time
 
     def _reset_previous_states(self):
         '''
@@ -300,7 +365,7 @@ class LethalInterface:
             reward = forceReward if forceReward != None else self._get_reward()
 
             # Add an experience to the learner
-            if reward != 0 or random.uniform(0, 1) > 0.9:
+            if abs(reward) < 0.5 or random.uniform(0, 1) > 0.9:
                 self.learner.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
             
             # Reset all previous states
@@ -314,7 +379,7 @@ class LethalInterface:
         # Predict the Q values for all actions in the current state
         # and get the action with the highest Q value.
         # Small random action chance.
-        if random.uniform(0, 1) >= 0.1:
+        if not self.random_enabled or random.uniform(0, 1) >= 0.1:
             predicted_q = self.learner.predict_q(previous_states)
             '''
             print("Avg Q:", np.mean(predicted_q))
@@ -333,7 +398,7 @@ class LethalInterface:
         self.previous_action = chosen_action
 
         # Do the actual training
-        self.learner.experience_replay()
+        # moved to separate thread self.learner.experience_replay()
 
     def _apply_action(self, action):
         '''

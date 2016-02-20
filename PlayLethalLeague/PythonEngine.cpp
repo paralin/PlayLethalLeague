@@ -71,7 +71,8 @@ std::string parse_python_exception() {
 	return ret;
 }
 
-PythonEngine::PythonEngine(Game* game, std::string scriptsRoot)
+PythonEngine::PythonEngine(Game* game, std::string scriptsRoot) 
+	: shutDown(false), learnOnceThread(&PythonEngine::learnOneFrameThread, this)
 {
 	this->game = game;
 	this->scriptsRoot = scriptsRoot;
@@ -86,6 +87,24 @@ void PythonEngine::initializePython()
 	Py_Initialize();
 	LOG("Initialized python!");
 }
+
+void PythonEngine::learnOneFrameThread()
+{
+	LOG("Started learnOne thread.");
+	while (true)
+	{
+		if (!interfaceInstance.is_none())
+		{
+			learnOneFrame();
+		}
+		else
+		{
+			Sleep(100);
+		}
+	}
+	LOG("Exiting learnOne thread.");
+}
+
 
 PythonEngine::~PythonEngine()
 {
@@ -119,6 +138,7 @@ std::string loadFileToString(const char* path)
 
 bool PythonEngine::loadPythonCode()
 {
+	std::lock_guard<std::mutex> mtx(pyMtx);
 	std::string expectedPath = scriptsRoot + "neural.py";
 	if (!PathFileExists(expectedPath.c_str()))
 	{
@@ -157,24 +177,62 @@ bool PythonEngine::loadPythonCode()
 	return true;
 }
 
+void PythonEngine::tryCallFunction(const char* fcns)
+{
+	{
+		std::lock_guard<std::mutex> mtx(pyMtx);
+		try {
+			if (interfaceInstance.is_none())
+			{
+				// LOG("Interface instance is NoneType.");
+				return;
+			}
+			auto fcn = interfaceInstance.attr(fcns);
+			fcn();
+		}
+		catch (...)
+		{
+			PRINT_PYTHON_ERROR;
+		}
+	}
+
+}
+
+
 void PythonEngine::newMatchStarted()
 {
-	try {
-		auto fcn = interfaceInstance.attr("newMatchStarted");
-		fcn();
-	} catch(...)
+	tryCallFunction("newMatchStarted");
+}
+
+// This function returns the next update time, so expand the code a bit
+void PythonEngine::playOneFrame()
+{
+	if (nextFrameUpdateTime > GetTickCount())
+		return;
 	{
-		PRINT_PYTHON_ERROR;
+		std::lock_guard<std::mutex> mtx(pyMtx);
+		try {
+			if (interfaceInstance.is_none())
+			{
+				LOG("Interface instance is NoneType.");
+				return;
+			}
+			auto fcn = interfaceInstance.attr("playOneFrame");
+			nextFrameUpdateTime = extract<DWORD>(fcn());
+		}
+		catch (...)
+		{
+			PRINT_PYTHON_ERROR;
+		}
 	}
 }
 
-void PythonEngine::playOneFrame()
+void PythonEngine::learnOneFrame()
 {
-	try {
-		auto fcn = interfaceInstance.attr("playOneFrame");
-		fcn();
-	} catch(...)
-	{
-		PRINT_PYTHON_ERROR;
-	}
+	tryCallFunction("learnOneFrame");
+}
+
+void PythonEngine::matchReset()
+{
+	tryCallFunction("matchReset");
 }

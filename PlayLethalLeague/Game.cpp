@@ -99,8 +99,10 @@ void Game::hookedFrameTick()
 		LOG("=== Entered a new Match ===");
 		python->newMatchStarted();
 	}
-	if (!isInGame && wasInGame)
+	if (!isInGame && wasInGame) {
+		python->matchReset();
 		resetInputs();
+	}
 	wasInGame = isInGame;
 
 	if (!isInGame)
