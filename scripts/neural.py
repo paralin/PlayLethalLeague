@@ -331,7 +331,9 @@ class ReinforcementLearner:
         # Get random experiences
         experiences = []
         for i in range(self.batch_size):
-            experiences.append(self.experiences[random.randrange(0, len(self.experiences))])
+            experiences.append(self.experiences[random.randrange(0, len(self.experiences) - 1)])
+        # Also append the latest experience
+        experiences.append(self.experiences[len(self.experiences) - 1])
 
         # Put all experiences data into numpy arrays
         states = np.array([ex.state for ex in experiences]).reshape(self.batch_size, self.state_size)
