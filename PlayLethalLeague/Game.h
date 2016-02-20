@@ -57,11 +57,17 @@ struct GameStorage
 	// Set the indexes to 1
 	char inputsForcePlayers[4];
 
+	// saved inputs
+	char inputsSaved[8];
+
 	// Address of frame hook function
 	void* frameHookAddress;
 
 	// Remove lives on deaths
 	char decrementLifeOnDeath;
+
+	// Are we in online play or not
+	char isOnline;
 
 	SinglePlayer getSinglePlayer(int idx)
 	{
@@ -70,6 +76,21 @@ struct GameStorage
 		p.coords = player_coords[idx];
 		p.base = player_bases[idx];
 		return p;
+	}
+
+	boost::python::list getSinglePlayerInputs(int idx)
+	{
+		boost::python::list inps;
+		char inp = inputsSaved[idx * 2];
+		// 8 bits
+		inps.append(inp & CONTROL_UP);
+		inps.append(inp & CONTROL_DOWN);
+		inps.append(inp & CONTROL_LEFT);
+		inps.append(inp & CONTROL_RIGHT);
+		inps.append(inp & CONTROL_ATTACK);
+		inps.append(inp & CONTROL_BUNT);
+		inps.append(inp & CONTROL_JUMP);
+		return inps;
 	}
 };
 

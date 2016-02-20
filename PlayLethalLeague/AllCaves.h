@@ -21,3 +21,6 @@ DEFINE_CODECAVE(WindowRefocusCave, "WindowRefocusCave");
 
 DEFINE_CODECAVE_KEEPORIG(StartOfFrameCave, "StartOfFrameCave");
 DEFINE_CODECAVE(DeathCave, "DeathCave");
+
+DEFINE_CODECAVE(OfflineInputsCave, "OfflineInputsCave");
+DEFINE_CODECAVE(OnlineInputsCave, "OnlineInputsCave");

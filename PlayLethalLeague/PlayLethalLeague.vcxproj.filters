@@ -179,6 +179,9 @@
     <ClCompile Include="..\thirdparty\asmjit\src\asmjit\x86\x86scheduler.cpp">
       <Filter>Source Files\asmjit</Filter>
     </ClCompile>
+    <ClCompile Include="OfflineInputsCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ILMerge.props" />

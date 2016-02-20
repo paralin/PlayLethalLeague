@@ -51,6 +51,7 @@ Game::Game(std::string scriptsRoot) :
 	REGISTER_CODECAVE(ResetCave);
 	REGISTER_CODECAVE(StartOfFrameCave);
 	// REGISTER_CODECAVE(DeathCave);
+	REGISTER_CODECAVE(OfflineInputsCave);
 }
 
 void Game::resetBall() const
@@ -137,6 +138,8 @@ void Game::checkResetOffsets() const
 		ZEROOFF(player_coords);
 		ZEROOFF(player_states);
 		ZEROOFF(player_spawn);
+		ZEROOFF(inputsSaved);
+		ZEROOFF(isOnline);
 	}
 }
 

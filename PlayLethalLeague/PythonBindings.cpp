@@ -44,6 +44,7 @@ BOOST_PYTHON_MODULE(LethalLeague)
 		ADD_POINTER(Game, gameData);
 	class_<GameStorage, GameStorage*>("GameStorage", no_init)
 		.def("player", &GameStorage::getSinglePlayer)
+		.def("player_inputs", &GameStorage::getSinglePlayerInputs)
 		ADD_POINTER(GameStorage, ball_coord)
 		ADD_POINTER(GameStorage, ball_state)
 		ADD_POINTER(GameStorage, dev_base)

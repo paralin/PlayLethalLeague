@@ -189,6 +189,7 @@
     <ClCompile Include="GameRulesCave.cpp" />
     <ClCompile Include="InputUpdateCave.cpp" />
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="OfflineInputsCave.cpp" />
     <ClCompile Include="PatternScanner.cpp" />
     <ClCompile Include="PlayerCave.cpp" />
     <ClCompile Include="PlayerSpawnCave.cpp" />

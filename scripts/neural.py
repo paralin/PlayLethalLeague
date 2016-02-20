@@ -122,15 +122,17 @@ class PlayerState:
         player_0 = game_data.player(self.idx)
 
         # Give a negative reward for missing a swing
-        isSwinging = player_0.state.character_state == 1
-        if self.wasSwinging and not isSwinging:
-            if player_0.state.total_hit_counter == self.hitsBeforeSwing:
-                self.log("Missed a swing, rewarding -1.")
-                reward -= 1
+        # This is buggy for non-player
+        if not self.observe_actions:
+            isSwinging = player_0.state.character_state == 1
+            if self.wasSwinging and not isSwinging:
+                if player_0.state.total_hit_counter == self.hitsBeforeSwing:
+                    self.log("Missed a swing, rewarding -1.")
+                    reward -= 1
         self.recordSwingState()
         
         # Give a positive reward for hitting the ball
-        hit_count = self.game.gameData.player(0).state.total_hit_counter
+        hit_count = player_0.state.total_hit_counter
         if hit_count != self.hit_count:
             # lastCountdown = 1 is better
             lastCountdown = 1.0 - min(max(self.last_animation_state_countdown / 15000.0, 0.0), 1.0)
@@ -141,12 +143,6 @@ class PlayerState:
             reward += (hit_count - self.hit_count) * 10
             reward += chargeBonus
             self.hit_count = hit_count
-            
-        # Give a reward for moving towards the ball
-        player_x = np.float(player_0.coords.xcoord)
-        player_y = np.float(player_0.coords.ycoord)
-        ball_x = np.float(game_data.ball_coord.xcoord)
-        ball_y = np.float(game_data.ball_coord.ycoord)
 
         if reward != 0:
             self.log("Reward " + str(reward) + " at time " + str(ll.get_tick_count()))
@@ -218,7 +214,21 @@ class PlayerState:
         if self.observe_actions:
             # just observe what we're currently pressing
             # not implemented yet (todo)
-            return
+            curr_action = [bool(elem) for elem in self.game.gameData.player_inputs(self.idx)]
+            # It's possible they're pressing some "exclusive" buttons simultanously, check for this
+            # up/down exclusive
+            if curr_action[0]:
+                curr_action[1] = False
+            # left/right exclusive
+            if curr_action[2]:
+                curr_action[3] = False
+            # ok find the matching action in the list
+            actidx = self.inter.actions_idx.get(str(curr_action), None)
+            if actidx is None:
+                self.log("Unable to find matching action for " + str(curr_action))
+            #else:
+            #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
+            chosen_action = actidx
         else:
             # Predict the Q values for all actions in the current state
             # and get the action with the highest Q value.
@@ -377,12 +387,17 @@ class LethalInterface:
         # Build all possible combinations
         # 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
         self.actions = []
+        self.actions_idx = {}
         exclusive_action = [[True, False], [False, True], [False, False]]
+        ixx = 0
         for horizontal in exclusive_action:
             for vertical in exclusive_action:
                 for execution in exclusive_action:
                     for jump in [[True,], [False,]]:
                         action = horizontal + vertical + execution + jump
+                        # make and hash a str for fast lookup later
+                        self.actions_idx[str(action)] = ixx
+                        ixx += 1
                         self.actions.append(action)
 
         self.learning = True
@@ -396,7 +411,7 @@ class LethalInterface:
         self.discount_factor = 0.9
         self.update_interval = 50
         self.dimensionality = 200
-        self.random_enabled = True
+        self.random_enabled = False
         self.currently_in_game = False
         # Assume that the time to run 1 batcn is 90% of the update interval to be safe initially
         self.average_batch_time = 0.9 * self.update_interval
