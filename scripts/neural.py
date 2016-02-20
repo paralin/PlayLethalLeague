@@ -421,6 +421,7 @@ class LethalInterface:
         self.dimensionality = 200
         self.random_enabled = False
         self.currently_in_game = False
+        self.learned_since_last_action = False
         # Assume that the time to run 1 batcn is 90% of the update interval to be safe initially
         self.average_batch_time = 0.9 * self.update_interval
         self.batch_times = []
@@ -464,9 +465,10 @@ class LethalInterface:
         nowTicks = ll.get_tick_count()
         
         # Don't do updates if it will take longer than to the next frame
-        if self.currently_in_game and self.next_update_time < nowTicks + self.average_batch_time:
+        if self.currently_in_game and self.learned_since_last_action: #self.next_update_time < nowTicks + self.average_batch_time:
             return
          
+        self.learned_since_last_action = True
         # Perform a batch
         if not self.learner.experience_replay():
             return
@@ -538,4 +540,5 @@ class LethalInterface:
         self.player_states[0]._do_learning()
         self.player_states[1]._do_learning()
         
+        self.learned_since_last_action = False
         return self.next_update_time
