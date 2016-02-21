@@ -72,12 +72,11 @@ std::string parse_python_exception() {
 }
 
   PythonEngine::PythonEngine(Game* game, std::string scriptsRoot) 
-: shutDown(false), learnOnceThread(&PythonEngine::learnOneFrameThread, this)
+: shutDown(false)
 {
   this->game = game;
   this->scriptsRoot = scriptsRoot;
 }
-
 
 void PythonEngine::initializePython()
 {
@@ -87,20 +86,6 @@ void PythonEngine::initializePython()
   Py_Initialize();
   LOG("Initialized python!");
 }
-
-void PythonEngine::learnOneFrameThread()
-{
-  LOG("Started learnOne thread.");
-  while (true)
-  {
-    if (!interfaceInstance.is_none())
-      learnOneFrame();
-    else
-      Sleep(100);
-  }
-  LOG("Exiting learnOne thread.");
-}
-
 
 PythonEngine::~PythonEngine()
 {
@@ -160,7 +145,7 @@ bool PythonEngine::loadPythonCode()
     }
 
     LOG("Loaded namespace, attempting to init LethalInterface.");
-    boost::python::object lethalinterinst = lethalinter(boost::python::ptr(this->game));
+    boost::python::object lethalinterinst = lethalinter(boost::python::ptr(this->game), scriptsRoot.c_str());
     this->interfaceInstance = lethalinterinst;
     LOG("Loaded LethalInterface successfully & instantiated it.");
   }
@@ -173,12 +158,11 @@ bool PythonEngine::loadPythonCode()
   return true;
 }
 
-boost::python::object PythonEngine::tryCallFunction(const char* fcns, bool doLockPy)
+boost::python::object PythonEngine::tryCallFunction(const char* fcns)
 {
   {
-    std::lock_guard<std::mutex> mtx;
-    if (doLockPy)
-      mtx = std::lock_guard<std::mutex>(pyMtx);
+    std::unique_lock<std::mutex> mtx;
+    mtx = std::unique_lock<std::mutex>(pyMtx);
     try {
       if (!interfaceInstance.is_none())
       {
@@ -208,14 +192,6 @@ void PythonEngine::playOneFrame()
   auto res = tryCallFunction("playOneFrame");
   if (!res.is_none())
     nextFrameUpdateTime = extract<DWORD>(res);
-}
-
-void PythonEngine::learnOneFrame()
-{
-  auto res = tryCallFunction("learnOneFrame", false);
-  if (!res.is_none())
-    if (extract<bool>(res))
-      tryCallFunction("applyLearning");
 }
 
 void PythonEngine::matchReset()

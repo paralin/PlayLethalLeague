@@ -21,9 +21,6 @@ public:
 	void newMatchStarted();
 	void playOneFrame();
 	void matchReset();
-  void learnOneFrame();
-
-	void learnOneFrameThread();
 
 	std::string scriptsRoot;
 	Game* game;
@@ -31,12 +28,11 @@ public:
 	boost::python::object global;
 	boost::python::object interfaceInstance;
 
-	std::mutex pyMtx;
-	std::thread learnOnceThread;
-
 	DWORD nextFrameUpdateTime = 0;
 
+	std::mutex pyMtx;
+
 private:
-  boost::python::object tryCallFunction(const char* fcn, bool doLockPy=true);
+  boost::python::object tryCallFunction(const char* fcn);
 };
 
