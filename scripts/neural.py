@@ -6,10 +6,6 @@ class LethalLeagueOutput:
 
     def flush(self):
         pass
-        
-sys.stdout = sys.stderr = LethalLeagueOutput()
-def log(txt):
-    print("[Python] " + txt)
     
 import sys
 import os.path
@@ -17,6 +13,10 @@ import time
 import pickle
 import numpy as np
 import random
+
+sys.stdout = sys.stderr = LethalLeagueOutput()
+def log(txt):
+    print("[Python] " + txt)
 
 from keras.models import Sequential
 from keras.layers.core import Dense
@@ -37,7 +37,7 @@ class Experience:
         self.terminal=terminal
 
 class PlayerState:
-    def __init__(self, idx, game, inter):
+    def __init__(self, idx, game, inter, observe_only):
         self.idx = idx
         self.game = game
         self.inter = inter
@@ -50,9 +50,15 @@ class PlayerState:
 
         self.previous_action = None
         self.previous_states = []
-
-        self.observe_actions = idx != 0
-
+        
+        self.is_ai = False
+        if not observe_only:
+            self.observe_actions = self.is_ai = idx != 0
+        else:
+            self.observe_actions = True
+            
+        self.game.setInputOverride(idx, not self.observe_actions)
+        
         self.round_winners = []
         self.round_winners_size = 100
         self._reset_previous_states()
@@ -129,7 +135,7 @@ class PlayerState:
 
         # Give a negative reward for missing a swing
         # This is buggy for non-player
-        if not self.observe_actions:
+        if not self.is_ai:
             isSwinging = player_0.state.character_state == 1
             if self.wasSwinging and not isSwinging:
                 if player_0.state.total_hit_counter == self.hitsBeforeSwing:
@@ -209,10 +215,10 @@ class PlayerState:
 
             # Add an experience to the player
             # Heavily favor experiences where the ball is tagged to the enemy
-            #stateBefore = self.previous_states[len(self.previous_states) - 2]
-            #enemyTagged = stateBefore[9] == 1
-            #if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
-            self.player.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
+            stateBefore = self.previous_states[len(self.previous_states) - 2]
+            enemyTagged = stateBefore[9] == 1
+            if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
+                self.player.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
 
             # Reset all previous states
             if terminal:
@@ -388,8 +394,15 @@ class LethalInterface:
         self.new_match_called_at_least_once = True
         self.currently_in_game = True
         self.was_playing = False
+        
+        is_online = False
+        
+        if chr(self.game.gameData.is_online) == 1:
+            is_online = True
+            log("Detected online match, observing only.")
+        self.is_online = is_online
 
-        self.player_states = [PlayerState(i, self.game, self) for i in range(2)]
+        self.player_states = [PlayerState(i, self.game, self, is_online) for i in range(2)]
 
         # calculate the map size
         coord_offset = 50000.0
@@ -438,8 +451,9 @@ class LethalInterface:
             self.player_states[1 - winnerIdx]._do_playing(-30, True)
             self.player_states[1 - winnerIdx]._add_round_winner(False)
 
-            self.game.respawnPlayer(1 - winnerIdx)
-            self.game.resetBall()
+            if not self.is_online:
+                self.game.respawnPlayer(1 - winnerIdx)
+                self.game.resetBall()
 
             print("Win percentage:", self.player_states[0]._get_win_percentage())
             
@@ -461,8 +475,9 @@ class LethalInterface:
         self.was_playing = playingNow
         # for now just bail out if we're not actually in play
         if not playingNow:
-            self.game.setPlayerLives(0, self.base_lives)
-            self.game.setPlayerLives(1, self.base_lives)
+            if not self.is_online:
+                self.game.setPlayerLives(0, self.base_lives)
+                self.game.setPlayerLives(1, self.base_lives)
             return self.next_update_time
 
         # Calculate things like total swing count, etc

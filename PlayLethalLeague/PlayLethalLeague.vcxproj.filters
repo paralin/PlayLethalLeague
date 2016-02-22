@@ -182,6 +182,12 @@
     <ClCompile Include="OfflineInputsCave.cpp">
       <Filter>Source Files\caves</Filter>
     </ClCompile>
+    <ClCompile Include="Reset2Cave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
+    <ClCompile Include="OnlineInputsCave.cpp">
+      <Filter>Source Files\caves</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ILMerge.props" />

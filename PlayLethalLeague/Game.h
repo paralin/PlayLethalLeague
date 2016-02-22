@@ -131,6 +131,7 @@ public:
 	void performCodeCave(intptr_t injectLoc, CodeCave* cav);
 
 	void setInputsEnabled(bool b) const;
+	void setInputOverride(int idx, bool set) const;
 
 	void setInputImmediate(int input, bool set);
 	void holdInputUntil(int input, TIME_POINT time);

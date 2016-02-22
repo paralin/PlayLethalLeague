@@ -190,11 +190,13 @@
     <ClCompile Include="InputUpdateCave.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="OfflineInputsCave.cpp" />
+    <ClCompile Include="OnlineInputsCave.cpp" />
     <ClCompile Include="PatternScanner.cpp" />
     <ClCompile Include="PlayerCave.cpp" />
     <ClCompile Include="PlayerSpawnCave.cpp" />
     <ClCompile Include="PythonBindings.cpp" />
     <ClCompile Include="PythonEngine.cpp" />
+    <ClCompile Include="Reset2Cave.cpp" />
     <ClCompile Include="ResetCave.cpp" />
     <ClCompile Include="StageCave.cpp" />
     <ClCompile Include="WindowFocusCave.cpp" />

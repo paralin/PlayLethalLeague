@@ -151,7 +151,7 @@ class LethalInterface:
         self.random_action_chance = 0.1
 
         # Batch size used for learner
-        batch_size = 2000
+        batch_size = 128
         # We want 2 seconds worth of learning each time
         self.target_batch_time = 3000
 
@@ -178,7 +178,10 @@ class LethalInterface:
         self.batch_times.append(afterTicks - nowTicks)
         self.average_batch_time = np.mean(self.batch_times)
 
+
         if len(self.batch_times) > 5:
+            self.batch_times.pop(0)
+                '''
             if abs(self.target_batch_time - (afterTicks - nowTicks)) > 200:
                 batches_per_ms = len(self.learner.experiences) / (afterTicks - nowTicks)
                 log("Current batch per millsecond: " + str(batches_per_ms))
@@ -190,7 +193,7 @@ class LethalInterface:
             elif self.average_batch_time < self.target_batch_time + 100:
                 self.learner.batch_size += 1
                 log("Raising batch size to " + str(self.learner.batch_size) + ", last timing was " + str(self.average_batch_time))
-            self.batch_times.pop(0)
+        '''
 
         # Learning happened, we want to apply it
         log("Finished learning, took " + str(afterTicks - nowTicks) + " average timing " + str(self.average_batch_time) + " with " + str(len(self.batch_times)) + " times.")

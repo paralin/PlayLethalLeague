@@ -51,7 +51,9 @@ Game::Game(std::string scriptsRoot) :
 	REGISTER_CODECAVE(ResetCave);
 	REGISTER_CODECAVE(StartOfFrameCave);
 	// REGISTER_CODECAVE(DeathCave);
+	REGISTER_CODECAVE(Reset2Cave);
 	REGISTER_CODECAVE(OfflineInputsCave);
+	REGISTER_CODECAVE(OnlineInputsCave);
 }
 
 void Game::resetBall() const
@@ -84,7 +86,6 @@ void Game::hookedFrameTick()
 		printedHookSuccessful = true;
 	}
 
-	gameData->inputsForcePlayers[0] = 0x01;
 	setInputsEnabled(true);
 	checkResetOffsets();
 	updateInputs();
@@ -134,13 +135,8 @@ void Game::hookedFrameTick()
 					break;
 				}
 			}
-			if (!wasBunting)
-			{
-				if (animState >= 16 && animState <= 19)
-				{
-					wasBunting = true;
-				}
-			}
+			if (animState >= 16 && animState <= 19)
+				wasBunting = true;
 		}
 
 		inputSticky = inputNow;
@@ -427,6 +423,11 @@ void Game::setInputsEnabled(bool b) const
 {
 	if (gameData->dev_base)
 		gameData->dev_base->windowActive = b ? 0x01 : 0x0;
+}
+
+void Game::setInputOverride(int idx, bool set) const
+{
+	gameData->inputsForcePlayers[idx] = set ? 0x01 : 0x0;
 }
 
 void Game::setPlayerExists(int playerN, bool exists) const

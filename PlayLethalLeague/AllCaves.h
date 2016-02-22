@@ -1,7 +1,5 @@
 #pragma once
 #include "CodeCave.h"
-#include "PatternScan.h"
-
 
 DEFINE_CODECAVE(DevCave, "DevCave");
 DEFINE_CODECAVE_KEEPORIG(BallCave, "BallCave");
@@ -23,4 +21,6 @@ DEFINE_CODECAVE_KEEPORIG(StartOfFrameCave, "StartOfFrameCave");
 DEFINE_CODECAVE(DeathCave, "DeathCave");
 
 DEFINE_CODECAVE(OfflineInputsCave, "OfflineInputsCave");
-DEFINE_CODECAVE(OnlineInputsCave, "OnlineInputsCave");
+DEFINE_CODECAVE_KEEPORIG(OnlineInputsCave, "OnlineInputsCave");
+
+DEFINE_CODECAVE_KEEPORIG(Reset2Cave, "Reset2Cave");
