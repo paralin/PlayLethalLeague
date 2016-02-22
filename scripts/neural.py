@@ -391,13 +391,12 @@ class LethalInterface:
 
     def newMatchStarted(self):
         log("newMatchStarted called")
-        self.new_match_called_at_least_once = True
         self.currently_in_game = True
         self.was_playing = False
         
         is_online = False
         
-        if chr(self.game.gameData.is_online) == 1:
+        if ord(self.game.gameData.is_online) == 1:
             is_online = True
             log("Detected online match, observing only.")
         self.is_online = is_online
@@ -420,6 +419,7 @@ class LethalInterface:
 
         self.last_update_time = 0
         self.next_update_time = 0
+        self.new_match_called_at_least_once = True
 
     def matchReset(self):
         self.currently_in_game = False
