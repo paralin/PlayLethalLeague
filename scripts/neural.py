@@ -28,6 +28,10 @@ from copy import copy
 def to_range(val, maxval):
     return max(min(2.0 * ((val - 0.5 * maxval) / maxval), 1.0), -1.0)
 
+def softmax(values, temperature):
+    e = np.exp(values / temperature)
+    return e / np.sum(e)
+
 class Experience:
     def __init__(self, state, action, reward, new_state, terminal):
         self.state = state
@@ -249,14 +253,13 @@ class PlayerState:
                 #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
             chosen_action = actidx
         else:
-            # Predict the Q values for all actions in the current state
-            # and get the action with the highest Q value.
-            # Small random action chance.
-            if not self.inter.random_enabled or random.uniform(0, 1) >= self.inter.random_action_chance:
-                predicted_q = self.player.predict_q(previous_states)
-                chosen_action = np.argmax(predicted_q)
+            predicted_q = self.player.predict_q(previous_states)
+
+            # Either sample a random action or choose the best one
+            if self.inter.random_enabled:
+                chosen_action = np.random.choice(self.inter.action_size, p=softmax(predicted_q, self.random_action_temperature))
             else:
-                chosen_action = random.randrange(0, self.inter.action_size)
+                chosen_action = np.argmax(predicted_q)
 
             self._apply_action(chosen_action)
 
@@ -349,14 +352,14 @@ class LethalInterface:
         self.player_states = []
 
         # Build all possible combinations
-        # 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
         self.actions = []
         self.actions_idx = {}
+        normal_action = [[True, True], [True, False], [False, True], [False, False]]
         exclusive_action = [[True, False], [False, True], [False, False]]
         ixx = 0
         for horizontal in exclusive_action:
             for vertical in exclusive_action:
-                for execution in exclusive_action:
+                for execution in normal_action:
                     for jump in [[True,], [False,]]:
                         action = horizontal + vertical + execution + jump
                         # make and hash a str for fast lookup later
@@ -365,7 +368,7 @@ class LethalInterface:
                         self.actions.append(action)
 
         self.random_enabled = False
-        self.random_action_chance = 0.1
+        self.random_action_temperature = 0.1 # Low: All actions equally likely, High: Higher Q more likely
 
         self.state_count = 2
         self.state_size = 16
