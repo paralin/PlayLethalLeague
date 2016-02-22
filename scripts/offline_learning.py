@@ -131,16 +131,18 @@ class LethalInterface:
     ]
 
     def __init__(self):
+        self.batch_times = []
+        
         # Build all possible combinations
         # 2^7 - 3 * 2^5 = 32 (Up/Down, Left/Right, Atk/Jump are exclusive)
         self.actions = []
-        self.batch_times = []
         self.actions_idx = {}
+        normal_action = [[True, True], [True, False], [False, True], [False, False]]
         exclusive_action = [[True, False], [False, True], [False, False]]
         ixx = 0
         for horizontal in exclusive_action:
             for vertical in exclusive_action:
-                for execution in exclusive_action:
+                for execution in normal_action:
                     for jump in [[True,], [False,]]:
                         action = horizontal + vertical + execution + jump
                         # make and hash a str for fast lookup later
@@ -181,7 +183,7 @@ class LethalInterface:
 
         if len(self.batch_times) > 5:
             self.batch_times.pop(0)
-                '''
+            '''
             if abs(self.target_batch_time - (afterTicks - nowTicks)) > 200:
                 batches_per_ms = len(self.learner.experiences) / (afterTicks - nowTicks)
                 log("Current batch per millsecond: " + str(batches_per_ms))

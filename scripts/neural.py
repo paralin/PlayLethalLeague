@@ -139,7 +139,8 @@ class PlayerState:
 
         # Give a negative reward for missing a swing
         # This is buggy for non-player
-        if not self.is_ai:
+        # just disable it for now
+        if not self.is_ai and False:
             isSwinging = player_0.state.character_state == 1
             if self.wasSwinging and not isSwinging:
                 if player_0.state.total_hit_counter == self.hitsBeforeSwing:
@@ -368,7 +369,7 @@ class LethalInterface:
                         self.actions.append(action)
 
         self.random_enabled = False
-        self.random_action_temperature = 0.1 # Low: All actions equally likely, High: Higher Q more likely
+        self.random_action_temperature = 0.9 # Low: All actions equally likely, High: Higher Q more likely
 
         self.state_count = 2
         self.state_size = 16
@@ -399,9 +400,9 @@ class LethalInterface:
         
         is_online = False
         
-        if ord(self.game.gameData.is_online) == 1:
+        if ord(self.game.gameData.is_online) == 1 and False:
             is_online = True
-            log("Detected online match, observing only.")
+            log("Detected online match")
         self.is_online = is_online
 
         self.player_states = [PlayerState(i, self.game, self, is_online) for i in range(2)]
@@ -461,7 +462,8 @@ class LethalInterface:
             print("Win percentage:", self.player_states[0]._get_win_percentage())
             
             # dump experiences
-            if len(self.player.experiences) > 50:
+            # Disable for now
+            if len(self.player.experiences) > 50 and False:
                 log("Dumped experiences.")
                 with open(self.experiences_path + str(ll.get_tick_count()) + '.exp', 'wb') as handle:
                     pickle.dump(self.player.experiences, handle)
