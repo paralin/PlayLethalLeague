@@ -1,7 +1,3 @@
-// PlayLethalLeague.cpp : Defines the entry point for the console application.
-//
-
-#include "stdafx.h"
 #include "Game.h"
 #include <io.h>
 #include <Fcntl.h>

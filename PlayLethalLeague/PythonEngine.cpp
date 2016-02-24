@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Game.h"
 #include "PythonEngine.h"
 #include <boost/python.hpp>

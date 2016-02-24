@@ -1,7 +1,3 @@
-// TestLoadLethalLeague.cpp : Defines the entry point for the console application.
-//
-
-#include "stdafx.h"
 #include "../PlayLethalLeague/Utils.h"
 #include "../PlayLethalLeague/PythonEngine.h"
 #include "../PlayLethalLeague/Game.h"

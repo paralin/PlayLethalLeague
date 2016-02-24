@@ -255,8 +255,7 @@ class PlayerState:
                 #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
             chosen_action = actidx
         else:
-            #predicted_q = self.player.predict_q(previous_states)
-            predicted_q = self.player.predict_q(state)
+            predicted_q = self.player.predict_q(previous_states)
 
             # Either sample a random action or choose the best one
             if self.inter.random_enabled:
@@ -315,8 +314,7 @@ class ReinforcementLearner:
         Predict the Q values for a single state
         '''
 
-        state_batch = [state]
-        return self.model.predict(state_batch)[0]
+        return self.model.predict(state.reshape(1, self.state_size))[0]
 
     def add_experience(self, state, action, reward, new_state, terminal):
         self.experiences.append(Experience(state, action, reward, new_state, terminal))
@@ -370,8 +368,8 @@ class LethalInterface:
         self.random_enabled = False
         self.random_action_temperature = 0.9 # Low: All actions equally likely, High: Higher Q more likely
 
-        self.state_count = 2
-        self.state_size = 20
+        self.state_count = 1 # How many state_size'd states we use
+        self.state_size = 16 # The size of a single state
         self.action_size = len(self.actions)
         self.learn_rate = 0.002
         self.discount_factor = 0.9
@@ -382,7 +380,7 @@ class LethalInterface:
         self.currently_in_game = False
 
         # We want 1 batch size for the player
-        self.player = ReinforcementLearner(1, self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
+        self.player = ReinforcementLearner(1, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
         log("Initialized ReinforcementLearner player with state size " + str(1) + " and action size " + str(self.action_size))
 
         # Load the experiences and weights

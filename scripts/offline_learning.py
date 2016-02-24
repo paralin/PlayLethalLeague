@@ -158,7 +158,7 @@ class LethalInterface:
         self.target_batch_time = 3000
 
         self.state_count = 2
-        self.state_size = 20
+        self.state_size = 16
         self.action_size = len(self.actions)
         self.learn_rate = 0.002
         self.discount_factor = 0.9
