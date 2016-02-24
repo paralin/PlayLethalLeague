@@ -66,32 +66,33 @@ class PlayerState:
         self.round_winners = []
         self.round_winners_size = 100
         self._reset_previous_states()
+        
+    def _get_player_state(self, idx):
+        game_data = self.game.gameData
+        player = player_0 = game_data.player(idx)
+        
+        playerChargeTimer = -1.0
+        if player.state.character_state == 1:
+            playerChargeTimer = to_range(player.state.change_animation_state_countdown, 15000)
+        
+        # Player coords (2)
+        # Player velocity (2)
+        # Player charge timer (1)
+        return [
+            # Coords (2)
+            to_range(player_0.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_0.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
+            # Velocity X/Y
+            min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
+            playerChargeTimer
+        ]
 
     def _get_state(self):
         game_data = self.game.gameData
-        player_0 = game_data.player(self.idx)
-        player_1 = game_data.player(1 - self.idx)
 
         ballSpeed = game_data.ball_state.ballSpeed
         ballState = game_data.ball_state.state
 
         correctedBallSpeed = to_range(ballSpeed if ballState is 0 else 0, 1200.0)
-
-        playerChargeTimer = -1.0
-        if player_0.state.character_state == 1:
-            playerChargeTimer = to_range(player_0.state.change_animation_state_countdown, 15000)
-
-        # Player 0 coords (2)
-        # Player 0 velocity (2)
-        # Player 0 charge timer (1)
-        # player 0 facing direction (1)
-        # Player 1 coords (2)
-        # Player 1 velocity (2)
-        # Ball coordinates (2)
-        # Ball speed (1)
-        # Ball direction (2)
-        # Ball tag (1)
-
         ballTag = ord(game_data.ball_state.ballTag)
         if ballTag != 0:
             ballTag = 1
@@ -108,23 +109,23 @@ class PlayerState:
         if np.linalg.norm(ball_direction) != 0:
             ball_direction /= np.linalg.norm(ball_direction)
 
-        return np.array([
-        # Player 0 coords
-            to_range(player_0.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_0.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
-        # Player 0 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
-            min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
-        # Player 0 charge timer
-            playerChargeTimer,
-            ord(player_0.state.facing_direction),
-            to_range(player_1.coords.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(player_1.coords.ycoord - self.inter.stageY, self.inter.stageYSize),
-        # Player 1 velocity, could be -max_speed, +max_speed, just divide by max_speed and min/max it
-            min(max(player_1.state.horizontal_speed / (player_1.base.max_speed / 60.0), -1.0), 1.0), min(max(player_1.state.vertical_speed / (player_1.base.fast_fall_speed / 60.0), -1.0), 1.0),
+        state = []
+        # Player 0 state (5)
+        state += self._get_player_state(self.idx)
+        # Player 1 state (5)
+        state += self._get_player_state(1 - self.idx)
+        # Ball coordinates (2)
+        # Ball speed (1)
+        # Ball direction (2)
+        # Ball tag (1)
+        state += [
             to_range(game_data.ball_coord.xcoord - self.inter.stageX, self.inter.stageXSize), to_range(game_data.ball_coord.ycoord - self.inter.stageY, self.inter.stageYSize),
             correctedBallSpeed,
             ball_direction[0],
             ball_direction[1],
             ballTag
-        ])
+        ]
+        return np.array(state)
 
     def log(self, txt):
         log("[" + str(self.idx) + "] " + txt)
@@ -220,10 +221,10 @@ class PlayerState:
 
             # Add an experience to the player
             # Heavily favor experiences where the ball is tagged to the enemy
-            stateBefore = self.previous_states[len(self.previous_states) - 2]
-            enemyTagged = stateBefore[9] == 1
-            if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
-                self.player.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
+            #stateBefore = self.previous_states[len(self.previous_states) - 2]
+            #enemyTagged = stateBefore[9] == 1
+            #if abs(reward) > 0.5 or random.uniform(0, 1) > (0.9 if not enemyTagged else 0.2):
+            self.player.add_experience(previous_previous_states, self.previous_action, reward, previous_states, terminal)
 
             # Reset all previous states
             if terminal:
@@ -254,7 +255,8 @@ class PlayerState:
                 #    self.log("Observed action " + str(actidx) + " = " + str(curr_action))
             chosen_action = actidx
         else:
-            predicted_q = self.player.predict_q(previous_states)
+            #predicted_q = self.player.predict_q(previous_states)
+            predicted_q = self.player.predict_q(state)
 
             # Either sample a random action or choose the best one
             if self.inter.random_enabled:
@@ -313,10 +315,7 @@ class ReinforcementLearner:
         Predict the Q values for a single state
         '''
 
-        # Add zeros to fill for batch size
-        state_batch = np.zeros((self.batch_size, self.state_size))
-        state_batch[0] = state
-
+        state_batch = [state]
         return self.model.predict(state_batch)[0]
 
     def add_experience(self, state, action, reward, new_state, terminal):
@@ -372,17 +371,18 @@ class LethalInterface:
         self.random_action_temperature = 0.9 # Low: All actions equally likely, High: Higher Q more likely
 
         self.state_count = 2
-        self.state_size = 16
+        self.state_size = 20
         self.action_size = len(self.actions)
         self.learn_rate = 0.002
         self.discount_factor = 0.9
         self.update_interval = 20
         self.dimensionality = 300
+        self.disable_experience_dump = False
         
         self.currently_in_game = False
 
         # We want 1 batch size for the player
-        self.player = ReinforcementLearner(1, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
+        self.player = ReinforcementLearner(1, self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
         log("Initialized ReinforcementLearner player with state size " + str(1) + " and action size " + str(self.action_size))
 
         # Load the experiences and weights
@@ -462,8 +462,7 @@ class LethalInterface:
             print("Win percentage:", self.player_states[0]._get_win_percentage())
             
             # dump experiences
-            # Disable for now
-            if len(self.player.experiences) > 50 and False:
+            if len(self.player.experiences) > 50 and not self.disable_experience_dump:
                 log("Dumped experiences.")
                 with open(self.experiences_path + str(ll.get_tick_count()) + '.exp', 'wb') as handle:
                     pickle.dump(self.player.experiences, handle)

@@ -114,7 +114,7 @@ class ReinforcementLearner:
 
         for i in range(len(experiences)):
             chosen_action = experiences[i].action
-            actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
+            actual_qs[i][chosen_action] = predicted_new_qs[i][chosen_action] + rewards[i] # self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
 
         self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
         return True
@@ -158,13 +158,13 @@ class LethalInterface:
         self.target_batch_time = 3000
 
         self.state_count = 2
-        self.state_size = 16
+        self.state_size = 20
         self.action_size = len(self.actions)
         self.learn_rate = 0.002
         self.discount_factor = 0.9
         self.dimensionality = 300
 
-        self.learner = ReinforcementLearner(batch_size, self.state_count * self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
+        self.learner = ReinforcementLearner(batch_size, self.state_size, self.action_size, self.learn_rate, self.discount_factor, self.dimensionality)
         log("Initialized ReinforcementLearner learner with state size " + str(self.state_size) + " and action size " + str(self.action_size))
 
     # Returning True will result in a file save
