@@ -1,11 +1,3 @@
-reinstall_lethalai = True # Set to True to reinstall
-
-if reinstall_lethalai:
-    import subprocess
-    print("Trying to reinstall lethalai")
-    subprocess.call(["python", "package/setup.py", "install"])
-    print("Done")
-
 import lethalai as la
 
 options = {
@@ -66,6 +58,5 @@ if __name__ == "__main__":
             if learn_count % options["learn_interval"] == 0:
                 print("Saving weights")
                 trainer.save_weights()
-
         except KeyboardInterrupt:
             break

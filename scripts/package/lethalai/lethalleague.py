@@ -1,4 +1,5 @@
 import os
+import sys
 import pickle
 import fnmatch
 import random
@@ -89,8 +90,13 @@ class ExperienceRecorder:
 
     def load_experiences(self, path):
         loaded = []
-        with open(path, "rb") as f:
-            loaded = pickle.load(f)
+
+        try:
+            with open(path, "rb") as f:
+                loaded = pickle.load(f)
+        except:
+            print("Error when loading experience at", path, ", skipping", sys.exc_info()[0])
+            return
         
         if any([e.state.shape[0] != self.expected_state_size or e.new_state.shape[0] != self.expected_state_size for e in loaded]):
             print("Invalid state in experience at", path, ", skipping the complete file")
