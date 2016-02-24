@@ -27,6 +27,18 @@
     <Compile Include="dummy.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="expconverter.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="package\setup.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="package\lethalai\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="package\lethalai\lethalleague.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="neural.py" />
     <Compile Include="offline_learning.py" />
     <Compile Include="testneural.py">
@@ -35,6 +47,10 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{344e7dc6-a61c-4cb0-9aa2-7eb74d1e01cb}\3.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="package\lethalai\" />
+    <Folder Include="package\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
