@@ -92,8 +92,11 @@ void Game::hookedFrameTick()
 	bool isInGame = gameData->ball_base && gameData->ball_state && gameData->ball_coord && gameData->stage_base;
 
 	// Kinda freeze the game until the python reload is done
-	while (isInGame && reloadingPythonCode)
-		Sleep(100);
+  while (isInGame && reloadingPythonCode)
+  {
+    Sleep(100);
+    wasInGame = false;
+  }
 
 	if (isInGame != wasInGame && isInGame)
 	{

@@ -79,7 +79,7 @@ class LethalInterface:
         
         # Online detection
         is_online = False
-        if ord(self.game.gameData.is_online) == 1 and False:
+        if ord(self.game.gameData.is_online) == 1:
             is_online = True
             log("Detected online match")
         self.is_online = is_online
