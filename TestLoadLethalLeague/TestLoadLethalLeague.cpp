@@ -1,8 +1,8 @@
-#include "../PlayLethalLeague/Utils.h"
-#include "../PlayLethalLeague/PythonEngine.h"
-#include "../PlayLethalLeague/Game.h"
+#include <misc/Utils.h>
 #include <iostream>
 #include <Shlwapi.h>
+#include <python/PythonEngine.h>
+#include <injection/Game.h>
 
 // The purpose of this is just to see if it opens at all
 // If you get an error message about a missing dll

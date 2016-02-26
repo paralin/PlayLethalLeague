@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{71d21e59-41fb-4f2c-a59f-2728bb43c454}</ProjectGuid>
+    <ProjectGuid>{a7c819b0-8248-303c-a55c-1eb6a12e8628}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>testneural.py</StartupFile>
     <SearchPath>
@@ -12,8 +12,9 @@
     <OutputPath>.</OutputPath>
     <Name>scripts</Name>
     <RootNamespace>scripts</RootNamespace>
-    <InterpreterId>{344e7dc6-a61c-4cb0-9aa2-7eb74d1e01cb}</InterpreterId>
+    <InterpreterId>{9b07f274-41ab-4386-8660-14f538801d39}</InterpreterId>
     <InterpreterVersion>3.4</InterpreterVersion>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,15 +31,7 @@
     <Compile Include="expconverter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="package\setup.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="package\lethalai\__init__.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="package\lethalai\lethalleague.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="lethalai.py" />
     <Compile Include="neural.py" />
     <Compile Include="offline_learning.py" />
     <Compile Include="testneural.py">
@@ -46,11 +39,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="{2af0f10d-7135-4994-9156-5d01c9c11b7e}\3.5" />
     <InterpreterReference Include="{344e7dc6-a61c-4cb0-9aa2-7eb74d1e01cb}\3.4" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="package\lethalai\" />
-    <Folder Include="package\" />
+    <InterpreterReference Include="{9b07f274-41ab-4386-8660-14f538801d39}\3.4" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

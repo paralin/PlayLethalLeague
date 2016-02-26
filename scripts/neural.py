@@ -1,18 +1,19 @@
-import LethalLeague as ll
-import sys
-
 class LethalLeagueOutput:
     def write(self, txt):
         ll.log(txt)
 
     def flush(self):
         pass
-    
-sys.stdout = sys.stderr = LethalLeagueOutput()
+
+import sys
+try:
+    import LethalLeague as ll
+    sys.stdout = sys.stderr = LethalLeagueOutput()
+except:
+    from dummy import DummyLethalLeague as ll
 
 def log(*txt):
     print("[Python] ", *txt)
-
 
 import os.path
 import time

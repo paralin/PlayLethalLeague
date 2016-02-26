@@ -58,4 +58,4 @@ target_link_libraries(LethalLeagueTestLoad optimized ${BOOST_LIBRARY_DIR}/boost_
 target_link_libraries(LethalLeagueTestLoad ${ASMJIT_DEPS})
 
 # Add preprocessor definitions
-add_definitions(-DNOMINMAX)
+add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_WARNINGS=1)

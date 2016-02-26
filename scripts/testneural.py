@@ -1,5 +1,9 @@
+import os
 import numpy as np
-from neural import ReinforcementLearner, LethalInterface
+import lethalai
+from lethalai import ReinforcementLearner
+from neural import LethalInterface
+from dummy import DummyGame
 
 class TestNeural():
     def test_learner(self):
@@ -17,7 +21,7 @@ class TestNeural():
             print(i, "Avg predicted:", np.mean(predicted_qs), "Avg post-learn predicted:", np.mean(post_predicted_qs))
 
     def test_interface(self):
-        interface = LethalInterface()
+        interface = LethalInterface(DummyGame(), os.path.dirname(lethalai.__file__))
         print("Initialized interface")
 
         interface.newMatchStarted()

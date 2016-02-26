@@ -33,3 +33,6 @@ class DummyLethalLeague:
 
     def setInputImmediate(button, enabled):
         print("Set input immediate", button, enabled)
+
+class DummyGame:
+    gameData = DummyGameData()
