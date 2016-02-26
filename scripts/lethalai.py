@@ -4,6 +4,7 @@ import pickle
 import fnmatch
 import random
 import numpy as np
+import math
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.layers.advanced_activations import ELU
@@ -417,6 +418,8 @@ class Player(BasePlayer):
         if len(self.max_recent_q) > 20:
             self.max_recent_q.pop(0)
 
+        upper_half = sorted_predicted_q[0:math.floor(len(sorted_predicted_q)/2.0)]
+
         #
         #self.log(" == top ==")
         #for i in range(0, 10):
@@ -424,14 +427,14 @@ class Player(BasePlayer):
 
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
-        if sorted_predicted_q[0] < 0.55 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act:
+        if (sorted_predicted_q[0] < 0.5 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
             chosen_action_r = [False] * action_size
             chosen_action = _action_to_id[str(chosen_action_r)]
         # Either sample a random action or choose the best one
         elif self.random_enabled:
             chosen_action = np.random.choice(self.action_size, p=softmax(predicted_q, self.random_temperature))
         else:
-            chosen_action = sorted_predicted_q[0] #np.argmax(predicted_q)
+            chosen_action = np.argmax(predicted_q)
 
         self._apply_action(chosen_action)
 
