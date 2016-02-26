@@ -1,4 +1,5 @@
 import lethalai as la
+import time
 
 options = {
     "batch_size": 256,
@@ -52,10 +53,11 @@ if __name__ == "__main__":
             exp_recorder.check_new_experiences()
             if trainer.train():
                 learn_count += 1
-
-            if learn_count % options["save_interval"] == 0:
-                print("Saving weights")
-                trainer.save_weights()
+                if learn_count % options["save_interval"] == 0:
+                    print("Saving weights")
+                    trainer.save_weights()
+            else:
+                time.sleep(1)
 
         except KeyboardInterrupt:
             break

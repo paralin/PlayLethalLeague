@@ -24,6 +24,7 @@ def softmax(values, temperature):
 # Build all possible combinations
 _id_to_action = [] # ActionId -> ActionList
 _action_to_id = {} # ActionStr -> ActionId
+_move_only_actions = [] # Action ids
 
 def id_to_action(id):
     return _id_to_action[id]
@@ -42,8 +43,12 @@ def _make_actions():
             for execution in normal_action:
                 for jump in [[True,], [False,]]:
                     action = horizontal + vertical + execution + jump
-                    _action_to_id[str(action)] = len(_action_to_id)
+                    idx = _action_to_id[str(action)] = len(_action_to_id)
                     _id_to_action.append(action)
+
+                    # Determine if this is a movement only action
+                    if not execution[0] and not execution[1]:
+                        _move_only_actions.append(idx)
 
 _make_actions()
 
@@ -428,8 +433,20 @@ class Player(BasePlayer):
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
         if (sorted_predicted_q[0] < 0.7 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
-            chosen_action_r = [False] * action_size
-            chosen_action = _action_to_id[str(chosen_action_r)]
+            # This code does nothing
+            # Instead filter to move only actions
+            move_qs = []
+            for i in _move_only_actions:
+                move_qs.append(predicted_q[i])
+            # Pick the best movement only action
+            chosen_action = np.max(move_qs)
+            # If the best one is less than zero then just ignore it
+            if chosen_action < 1.0:
+                chosen_action_r = [False] * action_size
+                chosen_action = _action_to_id[str(chosen_action_r)]
+            else:
+                # convert q value to action id
+                chosen_action = predictions[chosen_action]
         # Either sample a random action or choose the best one
         elif self.random_enabled:
             chosen_action = np.random.choice(self.action_size, p=softmax(predicted_q, self.random_temperature))
@@ -511,7 +528,7 @@ class ReinforcementLearner:
         # Train on all data
         experiences = self.exp_recorder.get_random_experiences(100 * self.batch_size)
         if not experiences:
-            print("Not enough experiences yet")
+            print("Not enough experiences yet (" + str(self.exp_recorder.experience_count()) + "/" + str(100 * self.batch_size) + ")")
             return False
 
         # Put all experiences data into numpy arrays

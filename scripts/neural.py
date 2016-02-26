@@ -27,9 +27,9 @@ options = {
     "action_size": la.get_action_count(),
     "state_count": 1,
     "random_enabled": True,
-    "random_temperature": 0.9, # Low: All actions equally likely, High: Higher Q more likely
+    "random_temperature": 0.98, # Low: All actions equally likely, High: Higher Q more likely
     "learn_rate": 0.002,
-    "discount_factor": 0.9,
+    "discount_factor": 0.95,
     "dimensionality": 300,
     "update_interval": 20,
     "experience_dump_min": 64,
@@ -79,7 +79,7 @@ class LethalInterface:
         
         # Online detection
         is_online = False
-        if ord(self.game.gameData.is_online) == 1:
+        if ord(self.game.gameData.is_online) == 1 or True:
             is_online = True
             log("Detected online match")
         self.is_online = is_online
