@@ -509,7 +509,9 @@ class ReinforcementLearner:
         '''
 
         # Train on all data
-        experiences = self.exp_recorder.experiences
+        experiences = self.exp_recorder.get_random_experiences(100 * self.batch_size)
+        if not experiences:
+            print("Not enough experiences yet")
 
         # Put all experiences data into numpy arrays
         states = np.array([ex.state for ex in experiences])

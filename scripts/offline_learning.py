@@ -8,7 +8,7 @@ options = {
     "learn_rate": 0.002,
     "discount_factor": 0.9,
     "dimensionality": 300,
-    "save_interval": 1,
+    "save_interval": 5,
 }
 
 class OfflineTrainer:
