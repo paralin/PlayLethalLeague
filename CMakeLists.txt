@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
-
 set(PYTHON_DIR "" CACHE FILEPATH "Path to Python")
 set(BOOST_INCLUDE_DIR "" CACHE FILEPATH "Path to boost directory")
 set(BOOST_LIBRARY_DIR "" CACHE FILEPATH "Path to boost libs")
