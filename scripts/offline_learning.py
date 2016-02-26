@@ -8,8 +8,7 @@ options = {
     "learn_rate": 0.002,
     "discount_factor": 0.9,
     "dimensionality": 300,
-    "report_interval": 10,
-    "learn_interval": 100,
+    "save_interval": 1,
 }
 
 class OfflineTrainer:
@@ -52,11 +51,9 @@ if __name__ == "__main__":
             if trainer.train():
                 learn_count += 1
 
-            if learn_count % options["report_interval"] == 0:
-                print("Learnt", learn_count, "batches")
-
-            if learn_count % options["learn_interval"] == 0:
+            if learn_count % options["save_interval"] == 0:
                 print("Saving weights")
                 trainer.save_weights()
+
         except KeyboardInterrupt:
             break

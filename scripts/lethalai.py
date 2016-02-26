@@ -508,7 +508,8 @@ class ReinforcementLearner:
         Perform a single experience replay learning step
         '''
 
-        experiences = self.exp_recorder.get_random_experiences(self.batch_size)
+        # Train on all data
+        experiences = self.exp_recorder.experiences
 
         # Put all experiences data into numpy arrays
         states = np.array([ex.state for ex in experiences])
@@ -525,6 +526,6 @@ class ReinforcementLearner:
             chosen_action = experiences[i].action
             actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
 
-        self.model.train_on_batch(states, actual_qs)
+        self.model.fit(states, actual_qs, batch_size=self.batch_size, nb_epoch=1, verbose=1)
 
         return True
