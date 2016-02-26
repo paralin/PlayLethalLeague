@@ -14,7 +14,7 @@ public:
 	bool shutDown;
 
 	_declspec(dllexport) void reloadPythonCode();
-	_declspec(dllexport) static void initializePython();
+	_declspec(dllexport) static void initializePython(std::string& scriptsRoot);
 	_declspec(dllexport) bool loadPythonCode();
 
 	// callbacks
@@ -31,6 +31,8 @@ public:
 	DWORD nextFrameUpdateTime = 0;
 
 	std::mutex pyMtx;
+
+	static const char* pythonHome;
 
 private:
   boost::python::object tryCallFunction(const char* fcn);

@@ -249,3 +249,5 @@ install_manifest.txt
 
 # Python
 *.pyc
+
+Win32/

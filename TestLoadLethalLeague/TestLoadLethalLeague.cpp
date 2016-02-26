@@ -14,8 +14,6 @@ int main()
 	std::cout << "Success, the process stared without crashing. You have all the dlls.";
 	testInjectedPlayLL();
 
-	LOG("Initializing python interpreter...");
-	PythonEngine::initializePython();
 	std::string rootPath;
 	std::string scriptsPath;
 	{
@@ -36,6 +34,9 @@ int main()
 		scriptsPath = rootPath + std::string("\\scripts\\");
 		LOG("Scripts path: " << scriptsPath.c_str());
 	}
+
+	LOG("Initializing python interpreter...");
+	PythonEngine::initializePython(scriptsPath);
 
 	Game* game = new Game(scriptsPath);
 	if (!game->python->loadPythonCode())

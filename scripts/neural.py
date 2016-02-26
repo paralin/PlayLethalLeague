@@ -17,7 +17,6 @@ def log(*txt):
 
 import os.path
 import time
-import pickle
 import numpy as np
 import importlib
 import lethalai as la

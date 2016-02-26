@@ -391,29 +391,44 @@ class Player(BasePlayer):
         self.learner = learner
         self.hotkeys = hotkeys
 
+        # put this somewhere better. I'm sure there's a better place for this. lol...
+        self.max_recent_q = []
+
         game.setInputOverride(player_id, True)
 
     def _choose_action(self, bundled_states):
         # Choose an action to perform this step
         chosen_action = None
+        action_size = len(_id_to_action[0])
 
         predicted_q = self.learner.predict_q(bundled_states)
         
         # Map action id to values
         predictions = {}
         for i in range(0, len(predicted_q)):
-            predictions[predict_q[i]] = i
-        
-        sorted_predicted_q = sorted(predict_q, reverse=True)
-        self.log(" == top ==")
-        for i in range(0, 10):
-            self.log(i, ": ", sorted_predicted_q[i])
+            predictions[predicted_q[i]] = i
 
+        # Note most of this could be replaced with one argmax, but I wanted to grab the top 10 for some other experimental code
+        # Optimize it eventually....
+        global_min_to_act = 3.0
+        sorted_predicted_q = sorted(predicted_q, reverse=True)
+
+        self.max_recent_q.append(sorted_predicted_q[0])
+        if len(self.max_recent_q) > 20:
+            self.max_recent_q.pop(0)
+
+        #
+        #self.log(" == top ==")
+        #for i in range(0, 10):
+        #    self.log(i, ": ", sorted_predicted_q[i])
+        if sorted_predicted_q[0] < 0.7 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act:
+            chosen_action_r = [False] * action_size
+            chosen_action = _action_to_id[str(chosen_action_r)]
         # Either sample a random action or choose the best one
-        if self.random_enabled:
+        elif self.random_enabled:
             chosen_action = np.random.choice(self.action_size, p=softmax(predicted_q, self.random_temperature))
         else:
-            chosen_action = np.argmax(predicted_q)
+            chosen_action = sorted_predicted_q[0] #np.argmax(predicted_q)
 
         self._apply_action(chosen_action)
 

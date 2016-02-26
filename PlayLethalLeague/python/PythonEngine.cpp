@@ -6,6 +6,8 @@
 #include <fstream>
 #include <streambuf>
 
+const char* PythonEngine::pythonHome = LL_PYTHON_HOME;
+
 using namespace boost::python;
 namespace py = boost::python;
 
@@ -77,8 +79,32 @@ std::string parse_python_exception() {
   this->scriptsRoot = scriptsRoot;
 }
 
-void PythonEngine::initializePython()
+#define ADD_TO_PATH(thing) oss << ";" << thing
+#define ADD_TO_PATHH(thing) oss << ";" << pythonHome << "/" << thing
+void PythonEngine::initializePython(std::string& scriptsRoot)
 {
+  LOG("Using PYTHONHOME " << pythonHome);
+  SetEnvironmentVariable("PYTHONHOME", pythonHome);
+  // build path
+  std::string path = getenv("PATH");
+  {
+    std::ostringstream oss;
+    oss << pythonHome;
+    ADD_TO_PATHH("Lib");
+    ADD_TO_PATHH("Lib/site-packages");
+    ADD_TO_PATHH("Lib/site-packages/win32");
+    ADD_TO_PATHH("Lib/site-packages/win32/lib");
+    ADD_TO_PATHH("Lib/site-packages/Pythonwin");
+    ADD_TO_PATHH("libs");
+    ADD_TO_PATHH("DLLs");
+    ADD_TO_PATHH("Scripts");
+    ADD_TO_PATHH("Library/bin");
+    ADD_TO_PATH(scriptsRoot);
+    oss << ";" << path;
+    SetEnvironmentVariable("PYTHONPATH", oss.str().c_str());
+    SetEnvironmentVariable("PATH", oss.str().c_str());
+    LOG("Using PYTHONPATH " << oss.str());
+  }
   LOG("Adding LethalLeague module...");
   PyImport_AppendInittab("LethalLeague", INIT_MODULE);
   LOG("Initializing python...");
@@ -116,6 +142,7 @@ std::string loadFileToString(const char* path)
   return str;
 }
 
+// #define LOAD_CODE_TO_STRING
 bool PythonEngine::loadPythonCode()
 {
   std::lock_guard<std::mutex> mtx(pyMtx);
@@ -131,9 +158,12 @@ bool PythonEngine::loadPythonCode()
     boost::python::object main = boost::python::import("__main__");
     global = object(main.attr("__dict__"));
     LOG("Evaluating " << expectedPath << "...");
+#ifdef LOAD_CODE_TO_STRING
     std::string code = loadFileToString(expectedPath.c_str());
     boost::python::exec(boost::python::str(code.c_str()), global, global);
-    // boost::python::exec_file(expectedPath.c_str(), global, global);
+#else
+    boost::python::exec_file(expectedPath.c_str(), global, global);
+#endif
     LOG("Executed, extracting data...");
     boost::python::object lethalinter;
     if (!global.contains("LethalInterface") || ((lethalinter = global["LethalInterface"]).is_none()))

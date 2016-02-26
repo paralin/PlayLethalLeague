@@ -95,10 +95,6 @@ Game* injectedGameInstance;
 int PlayLethalLeagueMain()
 {
 	InitInjectedConsole();
-	LOG("Initializing python interpreter...");
-	PythonEngine::initializePython();
-
-	LOG("Python initialization done.");
 
 	std::string rootPath;
 	std::string scriptsPath;
@@ -119,6 +115,10 @@ int PlayLethalLeagueMain()
 		scriptsPath = rootPath + std::string("\\scripts\\");
 		LOG("Scripts path: " << scriptsPath.c_str());
 	}
+
+	LOG("Initializing python interpreter...");
+	PythonEngine::initializePython(scriptsPath);
+	LOG("Python initialization done.");
 
 	auto g = injectedGameInstance = new Game(scriptsPath);
 	LOG("Instantiated game...");
