@@ -416,11 +416,11 @@ class Player(BasePlayer):
 
         # Note most of this could be replaced with one argmax, but I wanted to grab the top 10 for some other experimental code
         # Optimize it eventually....
-        global_min_to_act = 3.0
+        global_min_to_act = 0.2
         sorted_predicted_q = sorted(predicted_q, reverse=True)
 
         self.max_recent_q.append(sorted_predicted_q[0])
-        if len(self.max_recent_q) > 25:
+        if len(self.max_recent_q) > 20:
             self.max_recent_q.pop(0)
 
         upper_half = sorted_predicted_q[0:math.floor(len(sorted_predicted_q)/2.0)]
@@ -432,7 +432,7 @@ class Player(BasePlayer):
 
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
-        if (sorted_predicted_q[0] < 0.7 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
+        if (sorted_predicted_q[0] < 0.6 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
             # This code does nothing
             # Instead filter to move only actions
             move_qs = []
@@ -526,26 +526,32 @@ class ReinforcementLearner:
         '''
 
         # Train on all data
-        experiences = self.exp_recorder.get_random_experiences(100 * self.batch_size)
-        if not experiences:
+        chosen_experiences = self.exp_recorder.get_random_experiences(100 * self.batch_size)
+        if not chosen_experiences:
             print("Not enough experiences yet (" + str(self.exp_recorder.experience_count()) + "/" + str(100 * self.batch_size) + ")")
             return False
 
-        # Put all experiences data into numpy arrays
-        states = np.array([ex.state for ex in experiences])
-        rewards = np.array([ex.reward for ex in experiences])
-        new_states = np.array([ex.new_state for ex in experiences])
+        avg_loss = 0
+        for k, experiences in enumerate([chosen_experiences[i*self.batch_size:(i+1)*self.batch_size] for i in range(100)]):
+            # Put all experiences data into numpy arrays
+            states = np.array([ex.state for ex in experiences])
+            rewards = np.array([ex.reward for ex in experiences])
+            new_states = np.array([ex.new_state for ex in experiences])
 
-        # First predict the Q values for the old state, then predict
-        # the Qs of the new state and set the actual Q of the chosen
-        # action for each batch
-        actual_qs = self.model.predict(states)
-        predicted_new_qs = self.model.predict(new_states)
+            # First predict the Q values for the old state, then predict
+            # the Qs of the new state and set the actual Q of the chosen
+            # action for each batch
+            actual_qs = self.model.predict(states)
+            predicted_new_qs = self.model.predict(new_states)
 
-        for i in range(len(experiences)):
-            chosen_action = experiences[i].action
-            actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
+            for i in range(len(experiences)):
+                chosen_action = experiences[i].action
+                actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
 
-        self.model.fit(states, actual_qs, batch_size=self.batch_size, nb_epoch=1, verbose=1)
+            avg_loss += np.mean(self.model.train_on_batch(states, actual_qs))
+            sys.stdout.write("\rAvg Loss: " + str(avg_loss / (k+1)))
+            sys.stdout.flush()
+
+        print("\nFinished one epoch")
 
         return True
