@@ -23,6 +23,8 @@ class OfflineTrainer:
         
         self.learner = la.ReinforcementLearner(exp_recorder, options["batch_size"], options["state_count"] * options["state_size"], options["action_size"],
                 options["learn_rate"], options["discount_factor"], options["dimensionality"])
+
+        self.learner.load("weights.dat")
     
     def train(self):
         '''
