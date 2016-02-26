@@ -525,5 +525,6 @@ class ReinforcementLearner:
             chosen_action = experiences[i].action
             actual_qs[i][chosen_action] = self.discount_factor * predicted_new_qs[i][chosen_action] + rewards[i] if not experiences[i].terminal else experiences[i].reward
 
-        self.model.fit(states, actual_qs, nb_epoch=1, verbose=0)
+        self.model.train_on_batch(states, actual_qs)
+
         return True
