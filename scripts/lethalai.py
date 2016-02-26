@@ -421,7 +421,10 @@ class Player(BasePlayer):
         #self.log(" == top ==")
         #for i in range(0, 10):
         #    self.log(i, ": ", sorted_predicted_q[i])
-        if sorted_predicted_q[0] < 0.7 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act:
+
+        # this constant multiplied by the recent max q seems to almost be a passiveness setting
+        # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
+        if sorted_predicted_q[0] < 0.55 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act:
             chosen_action_r = [False] * action_size
             chosen_action = _action_to_id[str(chosen_action_r)]
         # Either sample a random action or choose the best one
