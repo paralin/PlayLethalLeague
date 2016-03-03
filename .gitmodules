@@ -22,3 +22,6 @@
 [submodule "thirdparty/CNTK"]
 	path = thirdparty/CNTK
 	url = https://github.com/Microsoft/CNTK.git
+[submodule "MultiNEAT"]
+	path = MultiNEAT
+	url = https://github.com/peter-ch/MultiNEAT.git
