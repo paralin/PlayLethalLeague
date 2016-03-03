@@ -65,6 +65,58 @@ void Game::resetBall() const
 	gd->ball_state->serveResetCounter = 300000;
 }
 
+void Game::setBallXCoord(int bx) const
+{
+	GameStorage* gd = gameData;
+	if (!gd->ball_state)
+		return;
+
+  gd->ball_coord->xcoord = bx;
+}
+
+void Game::setBallYCoord(int by) const
+{
+	GameStorage* gd = gameData;
+	if (!gd->ball_state)
+		return;
+
+  gd->ball_coord->ycoord = by;
+}
+
+void Game::setPlayerXCoord(int idx, int bx) const
+{
+  auto* gd = gameData;
+  if (!gd->player_coords[idx])
+    return;
+  gd->player_coords[idx]->xcoord = bx;
+}
+
+void Game::setPlayerYCoord(int idx, int by) const
+{
+  auto* gd = gameData;
+  if (!gd->player_coords[idx])
+    return;
+  gd->player_coords[idx]->ycoord = by;
+}
+
+void Game::setBallState(int state) const
+{
+  auto* gd = gameData;
+  if (!gd->ball_state)
+    return;
+  gd->ball_state->state = state;
+}
+
+void Game::setBallRespawnTimer(int tmr) const
+{
+  auto* gd = gameData;
+  if (!gd->ball_state)
+    return;
+  gd->ball_state->serveResetCounter = tmr;
+  gd->ball_state->serveLowerCounter = tmr;
+}
+
+
 void Game::respawnPlayer(int i) const
 {
 	GameStorage* gd = gameData;
@@ -335,7 +387,7 @@ void Game::performCodeCave(intptr_t injectLoc, CodeCave* cav)
 	size_t codeSizeNoJmp;
 	unsigned char* ren = cav->render(this, injectLoc, &codeSize, doCallOrig ? cav->overwrittenInstructionSize() : 0);
 
-	if (ren == NULL)
+	if (ren == nullptr)
 	{
 		LOG("Removing matched instructions at location " << injectLoc);
 		// We just want to overwrite the instruction with nop

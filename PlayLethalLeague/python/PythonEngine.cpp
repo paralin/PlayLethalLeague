@@ -21,7 +21,7 @@ extern "C" void INIT_MODULE();
 #endif
 
 #define PRINT_PYTHON_ERROR LOG(parse_python_exception());
-#define REINIT_WHEN_RELOAD
+// #define REINIT_WHEN_RELOAD
 
 std::string parse_python_exception() {
   PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
@@ -157,6 +157,7 @@ bool PythonEngine::loadPythonCode()
     return false;
   }
 
+#ifdef REINIT_WHEN_RELOAD
   if (engineNeedReinit)
   {
     LOG("Cleaning up the python interpreter...");
@@ -164,6 +165,7 @@ bool PythonEngine::loadPythonCode()
     LOG("Re-init interpreter...");
     initializePython(scriptsRoot);
   }
+#endif
 
   try {
     LOG("Setting up globals...");
@@ -202,6 +204,7 @@ bool PythonEngine::loadPythonCode()
 
 boost::python::object PythonEngine::tryCallFunction(const char* fcns)
 {
+  if (Py_IsInitialized())
   {
     std::unique_lock<std::mutex> mtx;
     mtx = std::unique_lock<std::mutex>(pyMtx);
@@ -229,7 +232,7 @@ void PythonEngine::newMatchStarted()
 // This function returns the next update time, so expand the code a bit
 void PythonEngine::playOneFrame()
 {
-  if (nextFrameUpdateTime > GetTickCount())
+  if (!Py_IsInitialized() || nextFrameUpdateTime > GetTickCount())
     return;
   auto res = tryCallFunction("playOneFrame");
   if (!res.is_none())

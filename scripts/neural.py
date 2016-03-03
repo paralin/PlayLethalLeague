@@ -19,6 +19,7 @@ import os.path
 import time
 import numpy as np
 import importlib
+import random
 import lethalai as la
 from lloptions import options
 
@@ -75,8 +76,9 @@ class LethalInterface:
         # Create the new players to play or observe
         self.players = []
         for player_id in range(2):
-            # Only create playing players for player 0 when not online
-            if player_id == 0 and not is_online:
+            # Only create playing players for player 0/1 when not online
+            our_player_idx = 0
+            if player_id == our_player_idx and not is_online:
                 self.players.append(la.Player(player_id, self.game, self.learner, LethalInterface.hotkeys, options))
             else:
                 self.players.append(la.ObservingPlayer(player_id, self.game, self.exp_recorder, options))
@@ -139,6 +141,23 @@ class LethalInterface:
                     self.learner.load(self.weights_path)
                     self.last_weight_mod_time = weight_mod_time
                     log("Reloaded weights from file.")
+
+        elif playing_now and not self.was_playing:
+            # we just started playing, random chance to swap the enemy and our positions
+            '''
+            if random.random() > 0.5:
+                log("Randomly chose to swap initial positions of the players.")
+                us = self.game.gameData.player(0)
+                them = self.game.gameData.player(1)
+                ux = us.coords.xcoord
+                uy = us.coords.ycoord
+                self.game.setPlayerXCoord(0, them.coords.xcoord)
+                #self.game.setPlayerYCoord(0, them.coords.ycoord)
+                self.game.setPlayerXCoord(1, ux)
+                self.game.setBallState(0)
+                self.game.setBallRespawnTimer(0)
+                #self.game.setPlayerYCoord(1, uy)
+                '''
 
         self.was_playing = playing_now
         # for now just bail out if we're not actually in play

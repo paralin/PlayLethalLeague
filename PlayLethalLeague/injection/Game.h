@@ -10,106 +10,6 @@
 #include <misc/Utils.h>
 #include <python/PythonEngine.h>
 
-class CodeCave;
-#define APP_ID 261180
-
-struct SinglePlayer
-{
-	EntityBase* base;
-	EntityCoords* coords;
-	PlayerState* state;
-};
-
-struct GameStorage
-{
-	void* ball_base;
-	EntityCoords* ball_coord;
-	BallState* ball_state;
-	void* gamerule_set;
-	DevRegion* dev_base;
-	Stage* stage_base;
-	EntityBase* player_bases[4];
-	EntityCoords* player_coords[4];
-	PlayerState* player_states[4];
-	void* player_spawn;
-
-	// Storage
-	// current player for player loop
-	int currentPlayer;
-
-	// Flags
-	// should the buffer be reset
-	char  do_reset;
-
-	// 2 bytes per player. 
-	char forcedInputs[8];
-
-	// At the end of each frame the inputs are copied here
-	// Don't set this
-	char inputsLastFrame[8];
-
-	// Counter for inputs code
-	// Don't set this
-	int inputsCurrentPlayer;
-
-	// Which players should have their inputs set.
-	// Set the indexes to 1
-	char inputsForcePlayers[4];
-
-	// saved inputs by asm
-	char inputsSaved[8];
-
-	// saved inputs pre python hooks, sticky attack until observe
-	char inputsSavedSticky[4];
-
-	// Address of frame hook function
-	void* frameHookAddress;
-
-	// Remove lives on deaths
-	char decrementLifeOnDeath;
-
-	// Are we in online play or not
-	char isOnline;
-
-	SinglePlayer getSinglePlayer(int idx)
-	{
-		SinglePlayer p;
-		p.state = player_states[idx];
-		p.coords = player_coords[idx];
-		p.base = player_bases[idx];
-		return p;
-	}
-
-	boost::python::list getSinglePlayerInputs(int idx)
-	{
-		boost::python::list inps;
-		const char inp = inputsSavedSticky[idx];
-		// 8 bits
-		inps.append(inp & CONTROL_UP);
-		inps.append(inp & CONTROL_DOWN);
-		inps.append(inp & CONTROL_LEFT);
-		inps.append(inp & CONTROL_RIGHT);
-		inps.append(inp & CONTROL_ATTACK);
-		inps.append(inp & CONTROL_BUNT);
-		inps.append(inp & CONTROL_JUMP);
-
-		// every get we clear it so that it can be updated again later
-		inputsSavedSticky[idx] = 0;
-		return inps;
-	}
-};
-
-struct CodeCaveScan
-{
-	std::shared_ptr<CodeCave> cave;
-	std::shared_ptr<PatternScan> patterns;
-	unsigned char* pattern;
-	size_t patternSize;
-	const char* name;
-	void* foundAddress;
-};
-
-class CodeCave;
 class Game
 {
 public:
@@ -149,6 +49,15 @@ public:
 
 	void respawnPlayer(int i) const;
 	void resetBall() const;
+
+  void setBallXCoord(int bx) const;
+  void setBallYCoord(int by) const;
+
+  void setPlayerXCoord(int idx, int bx) const;
+  void setPlayerYCoord(int idx, int by) const;
+
+  void setBallState(int state) const;
+  void setBallRespawnTimer(int tmr) const;
 
 	// Hooked function for frame tick!
 	void hookedFrameTick();

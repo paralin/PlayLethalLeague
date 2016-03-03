@@ -417,6 +417,7 @@ class Player(BasePlayer):
 
         predicted_q = self.learner.predict_q(bundled_states)
         
+        '''
         # Map action id to values
         predictions = {}
         for i in range(0, len(predicted_q)):
@@ -424,7 +425,7 @@ class Player(BasePlayer):
 
         # Note most of this could be replaced with one argmax, but I wanted to grab the top 10 for some other experimental code
         # Optimize it eventually....
-        global_min_to_act = 1.0
+        global_min_to_act = 0.2
         sorted_predicted_q = sorted(predicted_q, reverse=True)
 
         self.max_recent_q.append(sorted_predicted_q[0])
@@ -440,20 +441,17 @@ class Player(BasePlayer):
 
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
-        if (sorted_predicted_q[0] < 0.9 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act):
+        if (sorted_predicted_q[0] < 0.8 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act):
             move_qs = []
             for i in _move_only_actions:
                 move_qs.append(predicted_q[i])
             # Pick the best movement only action
             chosen_action = np.max(move_qs)
-            if chosen_action < 0.5:
-                chosen_action_r = [False] * action_size
-                chosen_action = _action_to_id[str(chosen_action_r)]
-            else:
-                # convert q value to action id
-                chosen_action = predictions[chosen_action]
+            # convert q value to action id
+            chosen_action = predictions[chosen_action]
         # Either sample a random action or choose the best one
-        elif self.random_enabled:
+        '''
+        if self.random_enabled:
             chosen_action = np.random.choice(self.action_size, p=softmax(predicted_q, self.random_temperature))
         else:
             chosen_action = np.argmax(predicted_q)
@@ -489,14 +487,16 @@ class ReinforcementLearner:
         self.model = Sequential()
 
         w_init = 'lecun_uniform'
-        self.model.add(Dense(output_dim=state_size, input_dim=state_size, init=w_init))
+        self.model.add(Dense(output_dim=dimensionality, input_dim=state_size, init=w_init))
+        # expand outwards and then narrow
         self.model.add(Activation('relu'))
-        self.model.add(Dense(input_dim=state_size, output_dim=dimensionality, init=w_init))
+        self.model.add(Dense(input_dim=dimensionality, output_dim=2 * action_size, init=w_init))
         self.model.add(Activation('relu'))
-        self.model.add(Dense(input_dim=dimensionality, output_dim=action_size, init=w_init))
+        self.model.add(Dropout(0.15))
+        self.model.add(Dense(input_dim=2 * action_size, output_dim=action_size, init=w_init))
         self.model.add(Activation('linear'))
 
-        self.model.compile(loss="mse", optimizer=RMSprop()) #optimizer=Adam(lr=learn_rate))
+        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
 
         # The creator is responsible for calling load weights and load experiences
 
