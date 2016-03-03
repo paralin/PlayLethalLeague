@@ -424,11 +424,11 @@ class Player(BasePlayer):
 
         # Note most of this could be replaced with one argmax, but I wanted to grab the top 10 for some other experimental code
         # Optimize it eventually....
-        global_min_to_act = 0.5
+        global_min_to_act = 1.0
         sorted_predicted_q = sorted(predicted_q, reverse=True)
 
         self.max_recent_q.append(sorted_predicted_q[0])
-        if len(self.max_recent_q) > 18:
+        if len(self.max_recent_q) > 10:
             self.max_recent_q.pop(0)
 
         upper_half = sorted_predicted_q[0:math.floor(len(sorted_predicted_q)/2.0)]
@@ -440,9 +440,7 @@ class Player(BasePlayer):
 
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
-        if (sorted_predicted_q[0] < 0.85 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
-            # This code does nothing
-            # Instead filter to move only actions
+        if (sorted_predicted_q[0] < 0.9 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act):
             move_qs = []
             for i in _move_only_actions:
                 move_qs.append(predicted_q[i])
