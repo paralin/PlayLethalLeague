@@ -31,9 +31,15 @@
     <Compile Include="expconverter.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="injected.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="lethalai.py" />
     <Compile Include="neural.py" />
     <Compile Include="offline_learning.py" />
+    <Compile Include="lloptions.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="testneural.py">
       <SubType>Code</SubType>
     </Compile>

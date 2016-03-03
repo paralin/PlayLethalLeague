@@ -21,6 +21,7 @@ extern "C" void INIT_MODULE();
 #endif
 
 #define PRINT_PYTHON_ERROR LOG(parse_python_exception());
+#define REINIT_WHEN_RELOAD
 
 std::string parse_python_exception() {
   PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
@@ -73,7 +74,7 @@ std::string parse_python_exception() {
 }
 
   PythonEngine::PythonEngine(Game* game, std::string scriptsRoot) 
-: shutDown(false)
+: shutDown(false), engineNeedReinit(false)
 {
   this->game = game;
   this->scriptsRoot = scriptsRoot;
@@ -83,6 +84,9 @@ std::string parse_python_exception() {
 #define ADD_TO_PATHH(thing) oss << ";" << pythonHome << "/" << thing
 void PythonEngine::initializePython(std::string& scriptsRoot)
 {
+  if (Py_IsInitialized())
+    return;
+
   LOG("Using PYTHONHOME " << pythonHome);
   SetEnvironmentVariable("PYTHONHOME", pythonHome);
   // build path
@@ -146,11 +150,19 @@ std::string loadFileToString(const char* path)
 bool PythonEngine::loadPythonCode()
 {
   std::lock_guard<std::mutex> mtx(pyMtx);
-  std::string expectedPath = scriptsRoot + "neural.py";
+  std::string expectedPath = scriptsRoot + "injected.py";
   if (!PathFileExists(expectedPath.c_str()))
   {
     LOG("Script expected at: " << expectedPath << " but not found.");
     return false;
+  }
+
+  if (engineNeedReinit)
+  {
+    LOG("Cleaning up the python interpreter...");
+    Py_Finalize();
+    LOG("Re-init interpreter...");
+    initializePython(scriptsRoot);
   }
 
   try {
@@ -184,6 +196,7 @@ bool PythonEngine::loadPythonCode()
     PRINT_PYTHON_ERROR;
     return false;
   }
+  engineNeedReinit = true;
   return true;
 }
 

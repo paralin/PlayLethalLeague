@@ -12,6 +12,7 @@ public:
 
 	// must be at the beginning
 	bool shutDown;
+  bool engineNeedReinit;
 
 	_declspec(dllexport) void reloadPythonCode();
 	_declspec(dllexport) static void initializePython(std::string& scriptsRoot);

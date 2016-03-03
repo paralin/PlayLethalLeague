@@ -5,10 +5,12 @@ import fnmatch
 import random
 import numpy as np
 import math
+
 from keras.models import Sequential
-from keras.layers.core import Dense
+from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.advanced_activations import ELU
 from keras.optimizers import Adam
+from keras.layers.recurrent import LSTM, SimpleRNN
 
 def to_range(val, maxval):
     # Shouldnt this be
@@ -51,8 +53,6 @@ def _make_actions():
                         _move_only_actions.append(idx)
 
 _make_actions()
-
-
 
 class Experience:
     def __init__(self, state, action, reward, new_state, terminal):
@@ -186,7 +186,7 @@ class BasePlayer:
         self.round_winners = []
         self.round_winners_size = 100
         
-    def _get_player_state(self, id):
+    def _get_player_state(self, id, rel_to=None):
         '''
         Gets the state for a single player
         '''
@@ -201,13 +201,20 @@ class BasePlayer:
         # Player coords (2)
         # Player velocity (2)
         # Player charge timer (1)
-        return [
+        res = [
             # Coords (2)
             to_range(player_0.coords.xcoord - self.stage_loc[0], self.stage_size[0]), to_range(player_0.coords.ycoord - self.stage_loc[1], self.stage_size[1]),
             # Velocity X/Y
             min(max(player_0.state.horizontal_speed / (player_0.base.max_speed / 60.0), -1.0), 1.0), min(max(player_0.state.vertical_speed / (player_0.base.fast_fall_speed / 60.0), -1.0), 1.0),
             playerChargeTimer
         ]
+
+        if rel_to != None:
+            other = self._get_player_state(rel_to)
+            res[0] -= other[0]
+            res[1] -= other[1]
+
+        return res
 
     def _get_state(self):
         '''
@@ -237,16 +244,17 @@ class BasePlayer:
             ball_direction /= np.linalg.norm(ball_direction)
 
         state = []
+        me = game_data.player(self.player_id)
         # Player 0 state (5)
         state += self._get_player_state(self.player_id)
         # Player 1 state (5)
-        state += self._get_player_state(1 - self.player_id)
+        state += self._get_player_state(1 - self.player_id, self.player_id)
         # Ball coordinates (2)
         # Ball speed (1)
         # Ball direction (2)
         # Ball tag (1)
         state += [
-            to_range(game_data.ball_coord.xcoord - self.stage_loc[0], self.stage_size[0]), to_range(game_data.ball_coord.ycoord - self.stage_loc[1], self.stage_size[1]),
+            to_range(game_data.ball_coord.xcoord - self.stage_loc[0], self.stage_size[0]) - state[0], to_range(game_data.ball_coord.ycoord - self.stage_loc[1], self.stage_size[1]) - state[1],
             corrected_ball_speed,
             ball_direction[0],
             ball_direction[1],
@@ -416,11 +424,11 @@ class Player(BasePlayer):
 
         # Note most of this could be replaced with one argmax, but I wanted to grab the top 10 for some other experimental code
         # Optimize it eventually....
-        global_min_to_act = 0.2
+        global_min_to_act = 0.5
         sorted_predicted_q = sorted(predicted_q, reverse=True)
 
         self.max_recent_q.append(sorted_predicted_q[0])
-        if len(self.max_recent_q) > 20:
+        if len(self.max_recent_q) > 18:
             self.max_recent_q.pop(0)
 
         upper_half = sorted_predicted_q[0:math.floor(len(sorted_predicted_q)/2.0)]
@@ -432,7 +440,7 @@ class Player(BasePlayer):
 
         # this constant multiplied by the recent max q seems to almost be a passiveness setting
         # lower values = more random-looking actions, higher values = bouldering bot (stand still and hit it)
-        if (sorted_predicted_q[0] < 0.6 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
+        if (sorted_predicted_q[0] < 0.85 * np.max(self.max_recent_q) or sorted_predicted_q[0] < global_min_to_act) and np.average(upper_half) > 0:
             # This code does nothing
             # Instead filter to move only actions
             move_qs = []
@@ -440,8 +448,7 @@ class Player(BasePlayer):
                 move_qs.append(predicted_q[i])
             # Pick the best movement only action
             chosen_action = np.max(move_qs)
-            # If the best one is less than zero then just ignore it
-            if chosen_action < 1.0:
+            if chosen_action < 0.5:
                 chosen_action_r = [False] * action_size
                 chosen_action = _action_to_id[str(chosen_action_r)]
             else:
@@ -479,21 +486,18 @@ class ReinforcementLearner:
         self.exp_recorder = exp_recorder
 
         self.discount_factor = discount_factor
-        
+
         # Build the model
         self.model = Sequential()
 
-        self.model.add(Dense(input_dim=state_size, output_dim=dimensionality))
-        self.model.add(ELU())
-        self.model.add(Dense(output_dim=dimensionality))
-        self.model.add(ELU())
-        self.model.add(Dense(output_dim=dimensionality))
+        self.model.add(Dense(output_dim=dimensionality, input_dim=state_size))
+        self.model.add(SimpleRNN(output_dim=dimensionality))
         self.model.add(ELU())
         self.model.add(Dense(output_dim=dimensionality))
         self.model.add(ELU())
         self.model.add(Dense(output_dim=action_size))
 
-        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
+        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate), class_mode="binary")
 
         # The creator is responsible for calling load weights and load experiences
 

@@ -20,21 +20,9 @@ import time
 import numpy as np
 import importlib
 import lethalai as la
+from lloptions import options
 
 # TODO: Allow these to be set in the command line
-options = {
-    "state_size": 16,
-    "action_size": la.get_action_count(),
-    "state_count": 1,
-    "random_enabled": False,
-    "random_temperature": 0.98, # Low: All actions equally likely, High: Higher Q more likely
-    "learn_rate": 0.002,
-    "discount_factor": 0.95,
-    "dimensionality": 300,
-    "update_interval": 20,
-    "experience_dump_min": 64,
-    "disable_experience_dump": False,
-}
 
 class LethalInterface:
     hotkeys = [

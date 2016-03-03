@@ -1,27 +1,9 @@
 import lethalai as la
 import time
-
-options = {
-    "batch_size": 256,
-    "state_size": 16,
-    "action_size": la.get_action_count(),
-    "state_count": 1,
-    "learn_rate": 0.002,
-    "discount_factor": 0.9,
-    "dimensionality": 300,
-    "save_interval": 5,
-}
+from lloptions import options
 
 class OfflineTrainer:
     def __init__(self, exp_recorder):
-        self.batch_size = 128
-        self.state_count = 1
-        self.state_size = 16
-        self.action_size = 72
-        self.learn_rate = 0.002
-        self.discount_factor = 0.9
-        self.dimensionality = 300
-        
         self.learner = la.ReinforcementLearner(exp_recorder, options["batch_size"], options["state_count"] * options["state_size"], options["action_size"],
                 options["learn_rate"], options["discount_factor"], options["dimensionality"])
 
