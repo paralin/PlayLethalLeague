@@ -9,7 +9,7 @@ import math
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.advanced_activations import ELU
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from keras.layers.recurrent import LSTM, SimpleRNN
 
 def to_range(val, maxval):
@@ -490,14 +490,15 @@ class ReinforcementLearner:
         # Build the model
         self.model = Sequential()
 
-        self.model.add(Dense(output_dim=dimensionality, input_dim=state_size))
-        self.model.add(SimpleRNN(output_dim=dimensionality))
-        self.model.add(ELU())
-        self.model.add(Dense(output_dim=dimensionality))
-        self.model.add(ELU())
-        self.model.add(Dense(output_dim=action_size))
+        w_init = 'lecun_uniform'
+        self.model.add(Dense(output_dim=state_size, input_dim=state_size, init=w_init))
+        self.model.add(Activation('relu'))
+        self.model.add(Dense(input_dim=state_size, output_dim=dimensionality, init=w_init))
+        self.model.add(Activation('relu'))
+        self.model.add(Dense(input_dim=dimensionality, output_dim=action_size, init=w_init))
+        self.model.add(Activation('linear'))
 
-        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate), class_mode="binary")
+        self.model.compile(loss="mse", optimizer=RMSprop()) #optimizer=Adam(lr=learn_rate))
 
         # The creator is responsible for calling load weights and load experiences
 

@@ -47,5 +47,5 @@ add_definitions(-DLL_PYTHON_HOME="${PYTHON_DIR}")
 project(LethalLeagueAI)
 
 add_subdirectory(PlayLethalLeague)
-INCLUDE_EXTERNAL_MSPROJECT(LethalLeagueScripts scripts/scripts.pyproj)
+INCLUDE_EXTERNAL_MSPROJECT(LethalLeagueScripts ${CMAKE_SOURCE_DIR}/scripts/scripts.pyproj)
 add_subdirectory(TestLoadLethalLeague)

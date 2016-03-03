@@ -251,3 +251,4 @@ install_manifest.txt
 *.pyc
 
 Win32/
+build/
