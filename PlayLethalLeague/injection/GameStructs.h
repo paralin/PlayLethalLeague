@@ -269,10 +269,10 @@ struct GameStorage
 		boost::python::list inps;
 		const char inp = inputsSavedSticky[idx];
 		// 8 bits
-		inps.append(inp & CONTROL_UP);
-		inps.append(inp & CONTROL_DOWN);
 		inps.append(inp & CONTROL_LEFT);
 		inps.append(inp & CONTROL_RIGHT);
+		inps.append(inp & CONTROL_UP);
+		inps.append(inp & CONTROL_DOWN);
 		inps.append(inp & CONTROL_ATTACK);
 		inps.append(inp & CONTROL_BUNT);
 		inps.append(inp & CONTROL_JUMP);

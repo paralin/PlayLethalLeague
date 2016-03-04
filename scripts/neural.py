@@ -27,8 +27,8 @@ from lloptions import options
 
 class LethalInterface:
     hotkeys = [
-        ll.CONTROL_UP, ll.CONTROL_DOWN,
         ll.CONTROL_LEFT, ll.CONTROL_RIGHT,
+        ll.CONTROL_UP, ll.CONTROL_DOWN,
         ll.CONTROL_ATTACK, ll.CONTROL_BUNT,
         ll.CONTROL_JUMP,
     ]

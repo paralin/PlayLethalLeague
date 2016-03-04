@@ -8,7 +8,7 @@ import math
 
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation, Dropout
-from keras.layers.advanced_activations import ELU
+from keras.layers.advanced_activations import ELU, PReLU
 from keras.optimizers import Adam, RMSprop
 from keras.layers.recurrent import LSTM, SimpleRNN
 
@@ -49,7 +49,7 @@ def _make_actions():
                     _id_to_action.append(action)
 
                     # Determine if this is a movement only action
-                    if not execution[0] and not execution[1]:
+                    if not execution[0] and not execution[1] and not jump[0]:
                         _move_only_actions.append(idx)
 
 _make_actions()
@@ -123,6 +123,10 @@ class ExperienceRecorder:
         # load the new files
         for match in new_matches:
             self.load_experiences(match)
+            n_ex = len(self.experiences)
+            if n_ex > 500000:
+                for i in range(n_ex - 500000):
+                    self.experiences.pop(0)
 
 class StateBundle:
     def __init__(self, state_size, state_count):
@@ -248,13 +252,13 @@ class BasePlayer:
         # Player 0 state (5)
         state += self._get_player_state(self.player_id)
         # Player 1 state (5)
-        state += self._get_player_state(1 - self.player_id, self.player_id)
+        state += self._get_player_state(1 - self.player_id)#, self.player_id)
         # Ball coordinates (2)
         # Ball speed (1)
         # Ball direction (2)
         # Ball tag (1)
         state += [
-            to_range(game_data.ball_coord.xcoord - self.stage_loc[0], self.stage_size[0]) - state[0], to_range(game_data.ball_coord.ycoord - self.stage_loc[1], self.stage_size[1]) - state[1],
+            to_range(game_data.ball_coord.xcoord - self.stage_loc[0], self.stage_size[0]), to_range(game_data.ball_coord.ycoord - self.stage_loc[1], self.stage_size[1]),
             corrected_ball_speed,
             ball_direction[0],
             ball_direction[1],
@@ -265,7 +269,7 @@ class BasePlayer:
     def log(self, *txt):
         print("[Python Player " + str(self.player_id) + "]", *txt)
 
-    def _get_reward(self):
+    def _get_reward(self, previous_action):
         '''
         Gets the reward between now and the last call to this function
         '''
@@ -299,6 +303,11 @@ class BasePlayer:
             reward += (hit_count - self.hit_count) * 10
             reward += charge_bonus
             self.hit_count = hit_count
+
+        if ord(player_0.state.touching_left_wall) > 0 or ord(player_0.state.touching_right_wall):
+            reward -= 0.1 
+        elif previous_action in _move_only_actions:
+            reward += 0.1
 
         if abs(reward) > 0.5:
             self.log("Reward " + str(reward))
@@ -345,7 +354,7 @@ class BasePlayer:
 
         # Get the reward and add s, a, r, s' as an experience
         if self.previous_action != None:
-            reward = forceReward if forceReward != None else self._get_reward()
+            reward = forceReward if forceReward != None else self._get_reward(self.previous_action)
 
             # Add an experience to the experience recorder
             self.exp_recorder.add_experience(previous_bundled_states, self.previous_action, reward, bundled_states, terminal)
@@ -380,6 +389,7 @@ class ObservingPlayer(BasePlayer):
         # It's possible they're pressing some "exclusive" buttons simultanously, check for this
         # and set them both to False (= not moving) if that is the case
 
+        #self.log("Player [" + str(self.player_id) + "] pactio: " + str(current_action))
         # up/down exclusive
         if current_action[0] and current_action[1]:
             current_action[0] = current_action[1] = False
@@ -389,9 +399,10 @@ class ObservingPlayer(BasePlayer):
             current_action[2] = current_action[3] = False
 
         # ok find the matching action in the list
+        #self.log("Player [" + str(self.player_id) + "] action: " + str(current_action))
         action_id = action_to_id(current_action)
         if action_id is None:
-            log("Unable to find matching action for", current_action)
+            self.log("Unable to find matching action for", current_action)
 
         return current_action
 
@@ -486,17 +497,20 @@ class ReinforcementLearner:
         # Build the model
         self.model = Sequential()
 
-        w_init = 'lecun_uniform'
-        self.model.add(Dense(output_dim=dimensionality, input_dim=state_size, init=w_init))
+        step_1 = dimensionality
+        step_2 = ((dimensionality - action_size) * 0.75) + action_size
+        step_3 = action_size
+
+        self.model.add(Dense(output_dim=step_1, input_dim=state_size))
         # expand outwards and then narrow
-        self.model.add(Activation('relu'))
-        self.model.add(Dense(input_dim=dimensionality, output_dim=2 * action_size, init=w_init))
-        self.model.add(Activation('relu'))
-        self.model.add(Dropout(0.15))
-        self.model.add(Dense(input_dim=2 * action_size, output_dim=action_size, init=w_init))
+        self.model.add(PReLU())
+        self.model.add(Dropout(0.05))
+        self.model.add(Dense(input_dim=step_1, output_dim=step_2))
+        self.model.add(PReLU())
+        self.model.add(Dense(input_dim=step_2, output_dim=step_3))
         self.model.add(Activation('linear'))
 
-        self.model.compile(loss="mse", optimizer=Adam(lr=learn_rate))
+        self.model.compile(loss="mse", optimizer=Adam())#lr=learn_rate))
 
         # The creator is responsible for calling load weights and load experiences
 
