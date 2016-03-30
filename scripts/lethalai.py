@@ -84,7 +84,7 @@ class ExperienceSet:
 
     def propogate_reward(self):
         num_experiences = len(self.experiences)
-        if num_experiences >= 10 and not self.reward_propogated:
+        if num_experiences >= 2 and not self.reward_propogated:
             reward = int(self.experiences[num_experiences - 1].reward)
             self.reward_propogated = True
             # Interpolate linearly from the start of the experience set to the end

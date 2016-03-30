@@ -9,8 +9,8 @@ options = {
     "discount_factor": 0.95,
     "dimensionality": 800,
     # 1 second of memory for eligbility trace
-    "target_memory": 1000,
-    "update_interval": 100,
+    "target_memory": 500,
+    "update_interval": 50,
     "experience_dump_min": 64,
     "disable_experience_dump": False,
     "batch_size": 256,
