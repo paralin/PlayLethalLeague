@@ -127,8 +127,21 @@ void PythonEngine::reloadPythonCode()
 
   game->reloadingPythonCode = true;
   try {
-    loadPythonCode();
-  } catch(...) {}
+    if (this->interfaceInstance.is_none() || this->interfaceReloader.is_none())
+      loadPythonCode();
+    else
+    {
+      // Clear interface instance
+      this->interfaceInstance = boost::python::object();
+      // Tell the reloader to reload the module
+      this->interfaceReloader["reload"]();
+      // Reload the code
+      loadPythonCode();
+    }
+  } catch(...)
+  {
+    LOG("Exception occured while reloading code.");
+  }
   game->reloadingPythonCode = false;
 }
 
@@ -180,16 +193,20 @@ bool PythonEngine::loadPythonCode()
 #endif
     LOG("Executed, extracting data...");
     boost::python::object lethalinter;
-    if (!global.contains("LethalInterface") || ((lethalinter = global["LethalInterface"]).is_none()))
+    boost::python::object lethalinterreloader;
+    // todo: make reloader optional
+    if (!global.contains("LethalInterface") || !global.contains("LethalInterfaceReloader") || ((lethalinter = global["LethalInterface"]).is_none()) || ((lethalinterreloader = global["LethalInterfaceReloader"]).is_none()))
     {
-      LOG("Script executed fine but doesn't contain a class named LethalInterface.");
+      LOG("Script executed fine but doesn't contain a class named LethalInterface and LethalInterfaceReloader.");
       LOG("Please add it and try again.");
       return false;
     }
 
     LOG("Loaded namespace, attempting to init LethalInterface.");
     boost::python::object lethalinterinst = lethalinter(boost::python::ptr(this->game), scriptsRoot.c_str());
+    boost::python::object lethalreloaderinst = lethalinterreloader();
     this->interfaceInstance = lethalinterinst;
+    this->interfaceReloader = lethalreloaderinst;
     LOG("Loaded LethalInterface successfully & instantiated it.");
   }
   catch(...)

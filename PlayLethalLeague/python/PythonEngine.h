@@ -28,6 +28,7 @@ public:
 
 	boost::python::object global;
 	boost::python::object interfaceInstance;
+	boost::python::object interfaceReloader;
 
 	DWORD nextFrameUpdateTime = 0;
 

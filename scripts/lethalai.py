@@ -62,6 +62,46 @@ class Experience:
         self.new_state = new_state
         self.terminal = terminal
 
+# Experience sets are all experiences between significant reward events
+class ExperienceSet:
+    def __init__(self, target_memory, update_interval, experiences=None):
+        self.target_memory = target_memory
+        self.update_interval = update_interval
+
+        self.reward_propogated = False
+        self.experiences = experiences if experiences != None else []
+
+        # Calculate how many to remember to hit target_memory
+        # We should pass this as a param but whatever
+        time_for_experience = update_interval # global_options["update_interval"]
+        self.num_to_remember = int(target_memory / time_for_experience)
+    
+    # Add experience, make sure we only remember around 1 second
+    def add_experience(self, experience):
+        self.experiences.append(experience)
+        if len(self.experiences) > self.num_to_remember:
+            self.experiences.pop(0)
+
+    def propogate_reward(self):
+        num_experiences = len(self.experiences)
+        if num_experiences >= 10 and not self.reward_propogated:
+            reward = int(self.experiences[num_experiences - 1].reward)
+            self.reward_propogated = True
+            # Interpolate linearly from the start of the experience set to the end
+            # ... except for the last one, obviously, since it already has the reward
+            print("Propgated (" + str(reward) + "):", end="")
+            for i in range(num_experiences - 1):
+                experience = self.experiences[i]
+                experience.reward += (i / (num_experiences - 1)) * reward
+                experience.reward = int(experience.reward)
+                print(" " + str(experience.reward), end="")
+            print()
+        self.reset()
+
+    def reset(self):
+        self.reward_propogated = False
+        self.experiences = []
+
 class ExperienceRecorder:
     def __init__(self, expected_state_size):
         self.expected_state_size = expected_state_size
@@ -73,7 +113,9 @@ class ExperienceRecorder:
             raise ValueError("Tried to add invalid state to exp recorder, expected size:", self.expected_state_size,
                   "actual sizes:", state.shape[0], new_state.shape[0])
 
-        self.experiences.append(Experience(state, action, reward, new_state, terminal))
+        exp = Experience(state, action, reward, new_state, terminal)
+        self.experiences.append(exp)
+        return exp
 
     def get_random_experiences(self, count):
         # Return None if there are not enough experiences
@@ -86,6 +128,7 @@ class ExperienceRecorder:
         self.experiences = []
         self.added_matches = []
 
+    # todo: move this into ExperienceSet
     def experience_count(self):
         return len(self.experiences)
 
@@ -163,6 +206,7 @@ class BasePlayer:
         self.player_id = player_id
         self.game = game
         self.exp_recorder = exp_recorder
+        self.exp_set = ExperienceSet(opts["target_memory"], opts["update_interval"])
 
         # Copy some constants
         self.state_size = opts["state_size"]
@@ -338,6 +382,7 @@ class BasePlayer:
         return sum(self.round_winners) / len(self.round_winners)
     
     def _choose_action(self, bundled_states):
+        print("Warn: base _chose_action called.")
         pass
 
     def update(self, forceReward=None, terminal=False):
@@ -355,13 +400,24 @@ class BasePlayer:
         # Get the reward and add s, a, r, s' as an experience
         if self.previous_action != None:
             reward = forceReward if forceReward != None else self._get_reward(self.previous_action)
+            # Make sure it's an int
+            reward = int(reward)
 
-            # Add an experience to the experience recorder
-            self.exp_recorder.add_experience(previous_bundled_states, self.previous_action, reward, bundled_states, terminal)
+            # Add an experience to the experience recorder and set
+            self.exp_set.add_experience(self.exp_recorder.add_experience(previous_bundled_states, self.previous_action, reward, bundled_states, terminal))
+
+            # Determine if this is a significant reward (greater than 8 magnitude)
+            if terminal or abs(reward) > 8.0:
+                self.exp_set.propogate_reward()
 
             # Reset all previous states
             if terminal:
+                print("Terminal reward with previous action (" + str(reward) + ")")
                 self.state_bundle.reset()
+                self.exp_set.reset()
+
+        if self.previous_action is None and terminal:
+            print("Terminal state, but previous_action is None?")
 
         # Call the method that will be overriden by subclasses of this
         chosen_action = self._choose_action(bundled_states)

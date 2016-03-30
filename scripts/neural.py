@@ -129,10 +129,10 @@ class LethalInterface:
             print("Win percentage:", self.players[0].get_win_percentage())
             
             # Dump experiences if there are more than than a set amount and it's not disabled
-            if self.exp_recorder.experience_count() >= options["experience_dump_min"] and not options["disable_experience_dump"]:
+            if not options["disable_experience_dump"]:
                 log("Dumped experiences.")
                 self.exp_recorder.save_experiences(self.experiences_path + str(ll.get_tick_count()) + '.exp')
-                self.exp_recorder.reset()
+            self.exp_recorder.reset()
             
             # Check if the weights file has change
             if os.path.exists(self.weights_path):
